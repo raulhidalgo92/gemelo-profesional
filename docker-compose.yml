@@ -38,6 +38,7 @@ services:
       - ./backend/app:/srv/backend/app
       - ./backend/migrations:/srv/backend/migrations
       - ./core/src/gemelo_core:/srv/core/src/gemelo_core
+      - ./secretos:/run/secretos:ro
     command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
 
   ingesta:
@@ -54,6 +55,7 @@ services:
       - ./data:/data
       - ./ingesta/src/ingesta:/srv/ingesta/src/ingesta
       - ./core/src/gemelo_core:/srv/core/src/gemelo_core
+      - ./secretos:/run/secretos:ro
     command: ["python", "-m", "ingesta", "programador"]
 
   frontend:
