@@ -22,10 +22,8 @@ frontend/.angular/
 frontend/out-tsc/
 coverage/
 
-# Datos descargados (se obtienen con los scripts de ingesta)
-data/raw/*
-!data/raw/.gitkeep
-data/snapshots/
+# Datos locales: descargas de la ingesta y copias para la evaluación
+data/
 
 # Editores y sistema
 .idea/

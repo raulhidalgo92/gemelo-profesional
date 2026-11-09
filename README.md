@@ -56,15 +56,14 @@ docker compose up --build
 # ESCO completo (≈13.500 competencias, ≈2.900 ocupaciones) desde su API oficial
 docker compose exec ingesta python -m ingesta esco-api
 
-# O*NET: descarga «O*NET Database» en formato texto desde https://www.onetcenter.org/database.html
-# y copia «Occupation Data.txt» y «Related Occupations.txt» en data/raw/onet/
+# O*NET 31.0 (descarga automática del zip oficial)
 docker compose exec ingesta python -m ingesta onet
 
 # Ofertas de InfoJobs (requiere credenciales en .env)
 docker compose exec ingesta python -m ingesta infojobs --consulta "desarrollador" --paginas 2
 ```
 
-Como alternativa a la API, ESCO también se puede cargar desde su descarga en CSV (español) colocada en `data/raw/esco/`: `python -m ingesta esco`.
+Las descargas se guardan en `data/` (no se versiona). Como alternativa a la API, ESCO también se puede cargar desde su descarga en CSV (español) colocada en `data/raw/esco/`: `python -m ingesta esco`.
 
 ### Tests y calidad
 

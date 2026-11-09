@@ -23,6 +23,7 @@ class Ajustes(BaseSettings):
     infojobs_client_id: str = ""
     infojobs_client_secret: str = ""
     esco_api_url: str = "https://ec.europa.eu/esco/api"
+    onet_url: str = "https://www.onetcenter.org/dl_files/database/db_31_0_text.zip"
 
     ingesta_cron: str = "0 3 * * *"
     directorio_datos: str = "/data"

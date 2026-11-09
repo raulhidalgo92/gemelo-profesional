@@ -2,19 +2,27 @@
 # SPDX-License-Identifier: Apache-2.0
 """Carga de O*NET: ocupaciones y matriz de ocupaciones relacionadas (base del Sankey).
 
-Descarga: https://www.onetcenter.org/database.html (formato «Text», licencia CC BY 4.0).
-Ficheros esperados: «Occupation Data.txt» y «Related Occupations.txt» (tabulados).
+Fuente: base de datos O*NET en formato texto (https://www.onetcenter.org/database.html),
+licencia CC BY 4.0. Si los ficheros no están en el directorio local, se descarga el zip
+oficial (variable ONET_URL) y se extraen solo los dos ficheros necesarios.
 """
 
+import io
 import logging
+import zipfile
 from collections.abc import Iterator
 from pathlib import Path
 
+import httpx
+
+from gemelo_core.config import ajustes
 from gemelo_core.db import sesion
 from gemelo_core.modelos import OcupacionOnet, TransicionOnet
 from ingesta.fuentes._util import leer_csv, lotes, upsert
 
 log = logging.getLogger(__name__)
+
+FICHEROS = ("Occupation Data.txt", "Related Occupations.txt")
 
 
 def filas_ocupaciones(ruta: Path) -> Iterator[dict]:
@@ -32,18 +40,37 @@ def filas_transiciones(ruta: Path) -> Iterator[dict]:
         }
 
 
+def extraer(contenido_zip: bytes, directorio: Path) -> None:
+    """Extrae del zip de O*NET solo los ficheros necesarios, sin respetar sus rutas internas."""
+    directorio.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(io.BytesIO(contenido_zip)) as z:
+        por_nombre = {Path(n).name: n for n in z.namelist()}
+        for fichero in FICHEROS:
+            if fichero not in por_nombre:
+                raise ValueError(f"El zip de O*NET no contiene «{fichero}»")
+            (directorio / fichero).write_bytes(z.read(por_nombre[fichero]))
+
+
+def descargar(directorio: Path) -> None:
+    url = ajustes().onet_url
+    log.info("Descargando O*NET desde %s", url)
+    r = httpx.get(url, follow_redirects=True, timeout=300)
+    r.raise_for_status()
+    extraer(r.content, directorio)
+
+
 def cargar(directorio: Path) -> None:
+    if not all((directorio / f).exists() for f in FICHEROS):
+        descargar(directorio)
+
     pasos = [
-        ("Occupation Data.txt", OcupacionOnet, filas_ocupaciones, ["codigo"]),
-        ("Related Occupations.txt", TransicionOnet, filas_transiciones, ["origen", "destino"]),
+        (FICHEROS[0], OcupacionOnet, filas_ocupaciones, ["codigo"]),
+        (FICHEROS[1], TransicionOnet, filas_transiciones, ["origen", "destino"]),
     ]
     for fichero, modelo, generador, claves in pasos:
-        ruta = directorio / fichero
-        if not ruta.exists():
-            raise FileNotFoundError(f"No se encuentra {ruta}. Descarga la base de datos O*NET.")
         total = 0
         with sesion() as s:
-            for lote in lotes(generador(ruta)):
+            for lote in lotes(generador(directorio / fichero)):
                 upsert(s, modelo, lote, claves)
                 total += len(lote)
         log.info("O*NET %s: %d filas", modelo.__tablename__, total)
