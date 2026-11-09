@@ -4,7 +4,7 @@
 |--------|-----------|--------|-----------|--------|
 | ESCO (Comisión Europea) | Ocupaciones, competencias y relaciones en español | API REST (`esco-api`) o descarga CSV (`esco`) | Una vez por versión | Cargado (13.479 competencias, 2.938 ocupaciones, 113.656 relaciones) |
 | O*NET 31.0 | Matriz de ocupaciones relacionadas (transiciones) | Descarga automática del zip oficial, CC BY 4.0 | Una vez por versión | Cargado (1.016 ocupaciones, 18.460 transiciones) |
-| Correspondencia ESCO ↔ O*NET | Enlace entre ambas clasificaciones | Descarga en la web de ESCO | Una vez | Pendiente |
+| Correspondencia ESCO ↔ O*NET (v1, 2022) | Enlace entre ambas clasificaciones | Descarga automática del CSV oficial de ESCO | Una vez | Cargado (4.128 correspondencias; 2.549 ocupaciones ESCO enlazadas) |
 | InfoJobs | Ofertas de empleo en España | API con registro de aplicación | Cada noche | Cliente implementado, falta probar con credenciales |
 | EURES (incluye SEPE) | Ofertas europeas y del SEPE | Por confirmar | Cada noche | Pendiente de confirmar vía de acceso |
 | INE | Salarios por ocupación (Encuesta de Estructura Salarial) | API JSON (Tempus) | Anual | Pendiente |
