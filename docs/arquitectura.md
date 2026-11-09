@@ -40,7 +40,7 @@
 - `ocupacion`, `competencia`, `ocupacion_competencia`: clasificación ESCO (vocabulario común).
 - `ocupacion_onet`, `transicion_onet`, `mapeo_esco_onet`: matriz de ocupaciones relacionadas de O*NET y su enlace con ESCO. Es la base del diagrama de Sankey.
 - `oferta`, `oferta_competencia`: ofertas normalizadas y sus competencias ESCO.
-- `estadistica_salarial`: salarios agregados (INE) por ocupación.
+- `estadistica_salarial`, `correspondencia_cno_isco`: salarios agregados del INE por ocupación CNO-11 y su enlace con ISCO-08 (y, por tanto, con ESCO).
 
 **Usuario**
 - `usuario`: cuenta y consentimiento RGPD.
