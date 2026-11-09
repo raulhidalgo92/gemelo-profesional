@@ -25,6 +25,14 @@ export interface Competencia {
   similitud: number;
 }
 
+/** semantico: por significado (embeddings) · texto: por coincidencia de caracteres */
+export type ModoBusqueda = 'semantico' | 'texto';
+
+export interface BusquedaCompetencias {
+  modo: ModoBusqueda;
+  resultados: Competencia[];
+}
+
 /** Acceso a la API REST del backend (siempre bajo /api). */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -38,7 +46,7 @@ export class ApiService {
     return this.http.get<ResumenMercado>('/api/mercado/resumen');
   }
 
-  buscarCompetencias(q: string): Observable<Competencia[]> {
-    return this.http.get<Competencia[]>('/api/competencias', { params: { q } });
+  buscarCompetencias(q: string, modo: ModoBusqueda): Observable<BusquedaCompetencias> {
+    return this.http.get<BusquedaCompetencias>('/api/competencias', { params: { q, modo } });
   }
 }
