@@ -7,9 +7,18 @@
 | Correspondencia ESCO ↔ O*NET (v1, 2022) | Enlace entre ambas clasificaciones | Descarga automática del CSV oficial de ESCO | Una vez | Cargado (4.128 correspondencias; 2.549 ocupaciones ESCO enlazadas) |
 | InfoJobs | Ofertas de empleo en España | API con registro de aplicación | Cada noche | Cliente implementado, falta probar con credenciales |
 | EURES (incluye SEPE) | Ofertas europeas y del SEPE | Por confirmar | Cada noche | Pendiente de confirmar vía de acceso |
-| INE | Salarios por ocupación (Encuesta de Estructura Salarial) | API JSON (Tempus) | Anual | Pendiente |
+| INE | Ganancia bruta anual por ocupación CNO-11: percentiles por subgrupo (Encuesta Cuatrienal 2022) y media por gran grupo 2015-2024 (Encuesta Anual) | API JSON pública (Tempus), sin registro (`ine`) | Anual | Cargado (608 datos; 98,7 % de las ocupaciones ESCO con salario de su subgrupo) |
+| Correspondencia CNO-11 ↔ CIUO-08 (INE) | Enlace entre la clasificación española de ocupaciones y la ISCO-08 que usa ESCO | Descarga automática del XLS oficial | Una vez | Cargado (541 correspondencias) |
 | Cedefop | Indicadores de competencias y demanda | Descarga | Anual | Pendiente |
 | Usuario | CV, perfil de LinkedIn en PDF, entrevistas | Subida en la aplicación | Al usarla | Pendiente |
+
+## Salarios del INE
+
+Cada ocupación ESCO tiene un código ISCO-08 de 4 dígitos. Con la correspondencia oficial del INE se obtienen sus códigos CNO-11 y, de ellos, el subgrupo principal (2 dígitos), que es el nivel más detallado con percentiles publicados. Si un código ISCO corresponde a varios subgrupos se elige el más frecuente que tenga datos; si ninguno los tiene, el gran grupo (letra). Solo se cargan datos de ambos sexos y del total nacional.
+
+El INE no publica cifras con menos de 100 observaciones y marca con un signo negativo las que tienen entre 100 y 500. Estas se guardan en positivo con `precision_baja = true` para que la interfaz las muestre como orientativas.
+
+Endpoint: `GET /api/mercado/salarios?ocupacion=<URI ESCO>`.
 
 ## Restricciones
 
