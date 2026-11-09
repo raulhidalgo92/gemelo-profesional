@@ -46,3 +46,44 @@
     justify-content: space-between;
   }
 }
+
+.selector {
+  display: inline-flex;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+
+  button {
+    border: 0;
+    background: transparent;
+    padding: 0.45rem 0.9rem;
+    font: inherit;
+    cursor: pointer;
+    color: var(--texto-suave);
+
+    &.activo {
+      background: var(--acento);
+      color: #fff;
+    }
+  }
+}
+
+.aviso {
+  color: var(--aviso);
+  font-size: 0.9rem;
+}
+
+.meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.similitud {
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  min-width: 3rem;
+  text-align: right;
+}

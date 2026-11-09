@@ -1,7 +1,7 @@
 <h1>🧠 Mi gemelo profesional</h1>
 <p class="suave">
-  Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte
-  o Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
+  Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte o
+  Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
 </p>
 
 <section class="rejilla">
@@ -28,10 +28,18 @@
     <h3>Datos de mercado cargados</h3>
     @if (mercado(); as m) {
       <ul class="cifras">
-        <li><strong>{{ m.ocupaciones | number }}</strong> ocupaciones ESCO</li>
-        <li><strong>{{ m.competencias | number }}</strong> competencias ESCO</li>
-        <li><strong>{{ m.transiciones | number }}</strong> transiciones O*NET</li>
-        <li><strong>{{ m.ofertas | number }}</strong> ofertas</li>
+        <li>
+          <strong>{{ m.ocupaciones | number }}</strong> ocupaciones ESCO
+        </li>
+        <li>
+          <strong>{{ m.competencias | number }}</strong> competencias ESCO
+        </li>
+        <li>
+          <strong>{{ m.transiciones | number }}</strong> transiciones O*NET
+        </li>
+        <li>
+          <strong>{{ m.ofertas | number }}</strong> ofertas
+        </li>
       </ul>
     } @else {
       <p class="suave">Sin datos todavía. Ejecuta la ingesta de ESCO y O*NET.</p>
@@ -44,18 +52,70 @@
   <p class="suave">
     Todo (CV, ofertas, entrevistas) se traduce a competencias ESCO. Prueba a buscar una:
   </p>
+
+  <div class="selector" role="radiogroup" aria-label="Tipo de búsqueda">
+    <button
+      type="button"
+      role="radio"
+      [attr.aria-checked]="modo() === 'semantico'"
+      [class.activo]="modo() === 'semantico'"
+      (click)="modo.set('semantico')"
+    >
+      Por significado
+    </button>
+    <button
+      type="button"
+      role="radio"
+      [attr.aria-checked]="modo() === 'texto'"
+      [class.activo]="modo() === 'texto'"
+      (click)="modo.set('texto')"
+    >
+      Por texto
+    </button>
+  </div>
+
   <input
     type="search"
-    placeholder="p. ej. Angular, gestión de proyectos, SQL…"
+    aria-label="Buscar competencia"
+    placeholder="p. ej. Angular, Excel avanzado, trabajo en equipo…"
     [value]="texto()"
-    (input)="buscar($any($event.target).value)"
+    (input)="texto.set($any($event.target).value)"
   />
-  <ul class="resultados">
-    @for (c of resultados(); track c.uri) {
-      <li>
-        {{ c.titulo }}
-        <span class="etiqueta">{{ c.tipo ?? 'competencia' }}</span>
-      </li>
+
+  @if (sinIa()) {
+    <p class="aviso">
+      La búsqueda por significado no está disponible; se muestran resultados por texto.
+    </p>
+  }
+
+  @switch (busqueda()) {
+    @case (undefined) {
+      <p class="suave">Buscando…</p>
     }
-  </ul>
+    @case (null) {}
+    @default {
+      @if (busqueda()!.resultados.length === 0) {
+        <p class="suave">
+          Sin resultados.
+          @if (modo() === 'texto') {
+            Prueba la búsqueda por significado.
+          }
+        </p>
+      } @else {
+        <ul class="resultados">
+          @for (c of busqueda()!.resultados; track c.uri) {
+            <li>
+              <span>{{ c.titulo }}</span>
+              <span class="meta">
+                <span class="etiqueta">{{ tipo(c.tipo) }}</span>
+                <span class="similitud" title="Similitud con la búsqueda">{{
+                  c.similitud | percent
+                }}</span>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
 </section>
