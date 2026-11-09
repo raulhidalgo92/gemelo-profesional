@@ -74,6 +74,14 @@ docker compose exec ingesta pytest
 cd frontend && npm test
 ```
 
+## Flujo de trabajo
+
+- `main`: versiones estables (lo que se despliega).
+- `develop`: integración del trabajo en curso.
+- `feature/<descripcion>`, `fix/<descripcion>`, `docs/<descripcion>`: una rama por cambio, creada desde `develop`.
+
+Cada rama se integra en `develop` mediante pull request, y `develop` se integra en `main` también mediante pull request. La integración continua (lint, tests y compilación) se ejecuta en cada pull request.
+
 ## Despliegue
 
 En un servidor con Docker (alojado en la UE):
