@@ -1,0 +1,73 @@
+# Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
+# Entorno de desarrollo:  docker compose up --build
+name: gemelo
+
+services:
+  db:
+    container_name: gemelo-db
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gemelo}
+      POSTGRES_USER: ${POSTGRES_USER:-gemelo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${PUERTO_DB:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    container_name: gemelo-backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PUERTO_API:-8000}:8000"
+    volumes:
+      - ./backend/app:/srv/backend/app
+      - ./backend/migrations:/srv/backend/migrations
+      - ./core/src/gemelo_core:/srv/core/src/gemelo_core
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+
+  ingesta:
+    container_name: gemelo-ingesta
+    build:
+      context: .
+      dockerfile: ingesta/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/data
+      - ./ingesta/src/ingesta:/srv/ingesta/src/ingesta
+      - ./core/src/gemelo_core:/srv/core/src/gemelo_core
+    command: ["python", "-m", "ingesta", "programador"]
+
+  frontend:
+    container_name: gemelo-frontend
+    build:
+      context: frontend
+      target: desarrollo
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${PUERTO_WEB:-4200}:4200"
+    volumes:
+      - ./frontend/src:/app/src
+
+volumes:
+  pgdata:

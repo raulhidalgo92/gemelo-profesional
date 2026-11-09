@@ -1,0 +1,61 @@
+<h1>🧠 Mi gemelo profesional</h1>
+<p class="suave">
+  Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte
+  o Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
+</p>
+
+<section class="rejilla">
+  <article class="tarjeta">
+    <h3>Estado del sistema</h3>
+    @switch (salud()) {
+      @case (undefined) {
+        <p class="suave">Comprobando…</p>
+      }
+      @case (null) {
+        <p><span class="punto error"></span> API no disponible</p>
+      }
+      @default {
+        <p>
+          <span class="punto" [class.ok]="salud()!.base_datos"></span>
+          API v{{ salud()!.version }} · base de datos
+          {{ salud()!.base_datos ? 'conectada' : 'sin conexión' }}
+        </p>
+      }
+    }
+  </article>
+
+  <article class="tarjeta">
+    <h3>Datos de mercado cargados</h3>
+    @if (mercado(); as m) {
+      <ul class="cifras">
+        <li><strong>{{ m.ocupaciones | number }}</strong> ocupaciones ESCO</li>
+        <li><strong>{{ m.competencias | number }}</strong> competencias ESCO</li>
+        <li><strong>{{ m.transiciones | number }}</strong> transiciones O*NET</li>
+        <li><strong>{{ m.ofertas | number }}</strong> ofertas</li>
+      </ul>
+    } @else {
+      <p class="suave">Sin datos todavía. Ejecuta la ingesta de ESCO y O*NET.</p>
+    }
+  </article>
+</section>
+
+<section class="tarjeta buscador">
+  <h3>Vocabulario ESCO</h3>
+  <p class="suave">
+    Todo (CV, ofertas, entrevistas) se traduce a competencias ESCO. Prueba a buscar una:
+  </p>
+  <input
+    type="search"
+    placeholder="p. ej. Angular, gestión de proyectos, SQL…"
+    [value]="texto()"
+    (input)="buscar($any($event.target).value)"
+  />
+  <ul class="resultados">
+    @for (c of resultados(); track c.uri) {
+      <li>
+        {{ c.titulo }}
+        <span class="etiqueta">{{ c.tipo ?? 'competencia' }}</span>
+      </li>
+    }
+  </ul>
+</section>

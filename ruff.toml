@@ -1,0 +1,9 @@
+# Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
+line-length = 100
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[lint.isort]
+known-first-party = ["gemelo_core", "app", "ingesta"]

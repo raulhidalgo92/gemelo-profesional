@@ -1,0 +1,21 @@
+<div class="marco">
+  <aside class="lateral">
+    <div class="marca">
+      <span class="logo">◎</span>
+      <div>
+        <strong>Gemelo profesional</strong>
+        <small>TFG · UNIR</small>
+      </div>
+    </div>
+    <nav>
+      @for (e of menu; track e.ruta) {
+        <a [routerLink]="e.ruta" routerLinkActive="activo">
+          <span aria-hidden="true">{{ e.icono }}</span> {{ e.texto }}
+        </a>
+      }
+    </nav>
+  </aside>
+  <main class="contenido">
+    <router-outlet />
+  </main>
+</div>

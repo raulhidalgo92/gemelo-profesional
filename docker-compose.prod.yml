@@ -1,0 +1,39 @@
+# Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
+# Producción: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    ports: !reset []
+
+  backend:
+    ports: !reset []
+    volumes: !reset []
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"]
+
+  ingesta:
+    volumes: !override
+      - ./data:/data
+
+  frontend:
+    build:
+      context: frontend
+      target: produccion
+    ports: !reset []
+    volumes: !reset []
+
+  caddy:
+    container_name: gemelo-caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      DOMINIO: ${DOMINIO:?Define DOMINIO}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./despliegue/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data
+
+volumes:
+  caddy_datos:

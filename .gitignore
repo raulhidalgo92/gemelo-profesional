@@ -1,0 +1,36 @@
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Angular
+node_modules/
+frontend/dist/
+frontend/.angular/
+coverage/
+
+# Datos descargados (se obtienen con los scripts de ingesta)
+data/raw/*
+!data/raw/.gitkeep
+data/snapshots/
+
+# Editores y sistema
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+Thumbs.db
+*:Zone.Identifier

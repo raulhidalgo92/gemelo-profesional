@@ -1,0 +1,70 @@
+.marco {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.lateral {
+  background: var(--superficie-oscura);
+  color: #fff;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .logo {
+    font-size: 2rem;
+    color: var(--acento);
+  }
+
+  small {
+    display: block;
+    opacity: 0.7;
+  }
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    opacity: 0.85;
+
+    &:hover {
+      background: rgb(255 255 255 / 8%);
+      opacity: 1;
+    }
+
+    &.activo {
+      background: var(--acento);
+      opacity: 1;
+    }
+  }
+}
+
+.contenido {
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  max-width: 1100px;
+}
+
+@media (max-width: 720px) {
+  .marco {
+    grid-template-columns: 1fr;
+  }
+
+  nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
