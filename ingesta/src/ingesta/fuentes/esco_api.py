@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 IDIOMA = "es"
 TAM_PAGINA = 500
 TAM_LOTE_DETALLE = 50
-PAUSA_SEGUNDOS = 0.2  # cortesía con el servicio público
+PAUSA_SEGUNDOS = 0.2  # pausa entre peticiones para no saturar la API
 
 
 # --- Normalización (funciones puras) ---------------------------------------------------------
@@ -70,6 +70,9 @@ def normalizar_competencia(c: dict) -> dict:
 def normalizar_ocupacion(o: dict) -> dict:
     isco = _primer_enlace(o, "broaderIscoGroup")
     grupo = isco.get("code") or (_ultimo_segmento(isco.get("uri")) or "").lstrip("C") or None
+    if not grupo and o.get("code"):
+        # Ocupaciones hijas: el grupo ISCO son los 4 dígitos iniciales del código ESCO
+        grupo = o["code"].split(".", 1)[0]
     return {
         "uri": o["uri"],
         "codigo": o.get("code"),
@@ -91,22 +94,22 @@ def relaciones_de(o: dict) -> Iterator[dict]:
 
 
 def _get(http: httpx.Client, ruta: str, params: list[tuple[str, str]] | dict) -> dict:
-    for intento in range(4):
+    """GET con reintentos y espera exponencial (la API devuelve errores 500 esporádicos)."""
+    intentos = 4
+    for intento in range(1, intentos + 1):
         try:
             r = http.get(ruta, params=params)
             r.raise_for_status()
             return r.json()
         except (httpx.HTTPStatusError, httpx.TransportError) as e:
-            if intento == 3:
+            if intento == intentos:
                 raise
-            espera = 2**intento
-            log.warning("ESCO %s falló (%s); reintento en %ss", ruta, e, espera)
-            time.sleep(espera)
-    raise RuntimeError("inalcanzable")
+            log.warning("ESCO %s falló (%s); reintento %d", ruta, e, intento)
+            time.sleep(2**intento)
 
 
 def listar_uris(http: httpx.Client, tipo: str) -> list[str]:
-    """Pagina /search. Ojo: en la API de ESCO `offset` es el NÚMERO DE PÁGINA, no de elementos."""
+    """Recorre /search. En esta API `offset` es el número de página, no de elementos."""
     uris: list[str] = []
     pagina = 0
     while True:

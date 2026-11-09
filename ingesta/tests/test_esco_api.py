@@ -107,3 +107,8 @@ def test_lote_que_falla_se_parte_y_omite_solo_la_uri_mala(monkeypatch):
     res = esco_api._detalle_lote(None, "skill", ["a", "b", "mala", "c"], fallidas)
     assert sorted(r["uri"] for r in res) == ["a", "b", "c"]
     assert fallidas == ["mala"]
+
+
+def test_ocupacion_hija_deduce_grupo_isco_del_codigo():
+    hija = {"uri": "x", "code": "2512.3.1", "preferredLabel": {"es": "hija"}, "_links": {}}
+    assert esco_api.normalizar_ocupacion(hija)["grupo_isco"] == "2512"
