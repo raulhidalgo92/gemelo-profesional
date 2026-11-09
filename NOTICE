@@ -9,4 +9,6 @@ Distribuido bajo la Licencia Apache 2.0 (ver LICENSE).
 Datos de terceros utilizados (no incluidos en el repositorio):
 - ESCO (Comisión Europea), reutilización conforme a la Decisión 2011/833/UE.
 - Base de datos O*NET (U.S. Department of Labor/ETA), licencia CC BY 4.0.
-- Estadísticas del INE y de Cedefop, y ofertas de EURES e InfoJobs, según sus condiciones de uso.
+- Estadísticas del Instituto Nacional de Estadística (INE): Encuestas de Estructura
+  Salarial y correspondencia CNO-11/CIUO-08, reutilización conforme al aviso legal del INE.
+- Estadísticas de Cedefop, y ofertas de EURES e InfoJobs, según sus condiciones de uso.

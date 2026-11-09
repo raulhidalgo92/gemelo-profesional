@@ -66,6 +66,9 @@ docker compose exec ingesta python -m ingesta esco-onet
 # Vectores semánticos de ESCO (necesita Vertex AI configurado)
 docker compose exec ingesta python -m ingesta embeddings
 
+# Salarios por ocupación del INE (API pública, sin registro)
+docker compose exec ingesta python -m ingesta ine
+
 # Ofertas de InfoJobs (requiere credenciales en .env)
 docker compose exec ingesta python -m ingesta infojobs --consulta "desarrollador" --paginas 2
 ```

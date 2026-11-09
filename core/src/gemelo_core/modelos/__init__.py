@@ -5,6 +5,7 @@
 from gemelo_core.modelos.base import Base
 from gemelo_core.modelos.mercado import (
     Competencia,
+    CorrespondenciaCnoIsco,
     EstadisticaSalarial,
     MapeoEscoOnet,
     Ocupacion,
@@ -25,6 +26,7 @@ from gemelo_core.modelos.usuario import (
 __all__ = [
     "Base",
     "Competencia",
+    "CorrespondenciaCnoIsco",
     "Entrevista",
     "EstadisticaSalarial",
     "Evidencia",

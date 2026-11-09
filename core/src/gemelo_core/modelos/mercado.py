@@ -11,6 +11,7 @@ from decimal import Decimal
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     Float,
@@ -173,6 +174,23 @@ class EstadisticaSalarial(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     fuente: Mapped[str] = mapped_column(String(32))
     codigo_ocupacion: Mapped[str] = mapped_column(String(32), index=True)  # CNO-11 / ISCO-08
+    descripcion: Mapped[str | None] = mapped_column(String(255))
     periodo: Mapped[str] = mapped_column(String(16))
     medida: Mapped[str] = mapped_column(String(64))  # media | mediana | p25 ...
     valor: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    # El INE marca así las cifras con pocas observaciones (100-500): orientativas.
+    precision_baja: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class CorrespondenciaCnoIsco(Base):
+    """Correspondencia oficial del INE entre la CNO-11 (España) y la ISCO-08 (CIUO-08).
+
+    ESCO clasifica sus ocupaciones con ISCO-08 y los salarios del INE vienen por CNO-11:
+    esta tabla une ambos mundos. Es de muchos a muchos a 4 dígitos.
+    """
+
+    __tablename__ = "correspondencia_cno_isco"
+
+    cno: Mapped[str] = mapped_column(String(4), primary_key=True)
+    isco: Mapped[str] = mapped_column(String(4), primary_key=True, index=True)
+    titulo_cno: Mapped[str] = mapped_column(String(255))
