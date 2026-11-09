@@ -59,6 +59,9 @@ docker compose exec ingesta python -m ingesta esco-api
 # O*NET 31.0 (descarga automática del zip oficial)
 docker compose exec ingesta python -m ingesta onet
 
+# Correspondencias ESCO ↔ O*NET (necesita las dos anteriores)
+docker compose exec ingesta python -m ingesta esco-onet
+
 # Ofertas de InfoJobs (requiere credenciales en .env)
 docker compose exec ingesta python -m ingesta infojobs --consulta "desarrollador" --paginas 2
 ```
