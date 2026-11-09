@@ -19,6 +19,7 @@ htmlcov/
 node_modules/
 frontend/dist/
 frontend/.angular/
+frontend/out-tsc/
 coverage/
 
 # Datos descargados (se obtienen con los scripts de ingesta)

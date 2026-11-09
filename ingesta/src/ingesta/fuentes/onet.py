@@ -47,4 +47,3 @@ def cargar(directorio: Path) -> None:
                 upsert(s, modelo, lote, claves)
                 total += len(lote)
         log.info("O*NET %s: %d filas", modelo.__tablename__, total)
-    # TODO: cargar la tabla de correspondencias ESCO ↔ O*NET (mapeo_esco_onet)
