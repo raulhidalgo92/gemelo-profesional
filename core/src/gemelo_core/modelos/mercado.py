@@ -26,7 +26,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from gemelo_core.modelos.base import Base
 
-# Dimensión de los vectores de embeddings (mistral-embed, bge-m3 y e5-large usan 1024).
+# Dimensión de los vectores de embeddings (gemini-embedding-001 reducido a 1024).
 DIMENSION_EMBEDDING = 1024
 
 

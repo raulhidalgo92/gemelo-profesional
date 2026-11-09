@@ -14,11 +14,25 @@ class Ajustes(BaseSettings):
     secret_key: str = "solo-para-desarrollo"
     cors_origins: str = "http://localhost:4200"
 
-    llm_base_url: str = "https://api.mistral.ai/v1"
-    llm_api_key: str = ""
-    llm_modelo: str = "mistral-small-latest"
-    embeddings_modelo: str = "mistral-embed"
+    # Proveedor de modelos de lenguaje: "vertex" (Gemini en Vertex AI, región UE)
+    # o "openai" (cualquier API compatible con el formato de OpenAI)
+    llm_proveedor: str = "vertex"
+    llm_modelo: str = "gemini-3.8-flash"
+    llm_modelo_ligero: str = "gemini-3.1-flash-lite"
+    embeddings_modelo: str = "gemini-embedding-001"
     embeddings_dimension: int = 1024
+
+    # Vertex AI: proyecto (si se deja vacío se toma del JSON de la cuenta de servicio) y
+    # ubicaciones europeas. Los modelos Gemini se sirven en la multirregión «eu» y los de
+    # embeddings en regiones concretas, así que se configuran por separado.
+    vertex_proyecto: str = ""
+    vertex_region: str = "eu"
+    vertex_region_embeddings: str = "europe-west1"
+    google_application_credentials: str = "/run/secretos/vertex.json"
+
+    # Proveedor alternativo compatible con OpenAI
+    llm_base_url: str = ""
+    llm_api_key: str = ""
 
     infojobs_client_id: str = ""
     infojobs_client_secret: str = ""

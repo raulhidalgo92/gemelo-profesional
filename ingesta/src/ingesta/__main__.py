@@ -7,6 +7,7 @@ Ejemplos (dentro del contenedor):
     python -m ingesta esco --dir /data/raw/esco
     python -m ingesta onet
     python -m ingesta esco-onet
+    python -m ingesta embeddings
     python -m ingesta infojobs --consulta "desarrollador" --paginas 5
     python -m ingesta programador
 """
@@ -40,6 +41,9 @@ def main() -> None:
     s = sub.add_parser("esco-onet", help="Carga la tabla de correspondencias ESCO ↔ O*NET")
     s.add_argument("--dir", type=Path, default=raiz / "esco_onet")
 
+    s = sub.add_parser("embeddings", help="Calcula los vectores semánticos de ESCO")
+    s.add_argument("--limite", type=int, default=None, help="Máximo por tipo (para pruebas)")
+
     s = sub.add_parser("infojobs", help="Descarga ofertas de la API de InfoJobs")
     s.add_argument("--consulta", default="")
     s.add_argument("--paginas", type=int, default=5)
@@ -65,6 +69,10 @@ def main() -> None:
         from ingesta.fuentes import esco_onet
 
         esco_onet.cargar(args.dir)
+    elif args.orden == "embeddings":
+        from ingesta.fuentes import embeddings
+
+        embeddings.cargar(limite=args.limite)
     elif args.orden == "infojobs":
         from ingesta.fuentes import infojobs
 

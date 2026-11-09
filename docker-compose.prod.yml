@@ -6,12 +6,14 @@ services:
 
   backend:
     ports: !reset []
-    volumes: !reset []
+    volumes: !override
+      - ./secretos:/run/secretos:ro
     command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"]
 
   ingesta:
     volumes: !override
       - ./data:/data
+      - ./secretos:/run/secretos:ro
 
   frontend:
     build:

@@ -51,7 +51,7 @@
 
 ## Uso de modelos de lenguaje
 
-El cliente (`core/src/gemelo_core/ia.py`) habla el formato de API compatible con OpenAI, que implementan la mayoría de proveedores. El proveedor y el modelo se eligen con variables de entorno, lo que permite comparar alternativas en la evaluación. Antes de cualquier llamada con datos de usuario se aplica `seudonimizacion.py`.
+El acceso a los modelos se encapsula en `core/src/gemelo_core/ia.py` con la interfaz `ClienteIA`. La implementación por defecto usa Gemini en Vertex AI con región europea; otra implementación admite cualquier API compatible con OpenAI, lo que permite comparar modelos en la evaluación. Antes de cualquier llamada con datos de usuario se aplica `seudonimizacion.py`. Ver [decisión 0002](decisiones/0002-proveedor-ia.md).
 
 ## Decisiones
 
