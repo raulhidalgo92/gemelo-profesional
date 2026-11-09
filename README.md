@@ -59,6 +59,9 @@ docker compose exec ingesta python -m ingesta esco-api
 # O*NET 31.0 (descarga automática del zip oficial)
 docker compose exec ingesta python -m ingesta onet
 
+# Correspondencias ESCO ↔ O*NET (necesita las dos anteriores)
+docker compose exec ingesta python -m ingesta esco-onet
+
 # Ofertas de InfoJobs (requiere credenciales en .env)
 docker compose exec ingesta python -m ingesta infojobs --consulta "desarrollador" --paginas 2
 ```
@@ -73,6 +76,14 @@ docker compose exec backend ruff check /srv
 docker compose exec ingesta pytest
 cd frontend && npm test
 ```
+
+## Flujo de trabajo
+
+- `main`: versiones estables (lo que se despliega).
+- `develop`: integración del trabajo en curso.
+- `feature/<descripcion>`, `fix/<descripcion>`, `docs/<descripcion>`: una rama por cambio, creada desde `develop`.
+
+Cada rama se integra en `develop` mediante pull request, y `develop` se integra en `main` también mediante pull request. La integración continua (lint, tests y compilación) se ejecuta en cada pull request.
 
 ## Despliegue
 
