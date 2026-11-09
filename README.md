@@ -40,10 +40,11 @@ Más detalle en [docs/arquitectura.md](docs/arquitectura.md) y [docs/fuentes-de-
 
 ## Puesta en marcha (desarrollo)
 
-Requisitos: Docker con Docker Compose v2.
+Requisitos: Docker con Docker Compose v2 y un proyecto de Google Cloud con Vertex AI habilitado.
 
 ```bash
-cp .env.example .env          # y rellena las claves
+cp .env.example .env          # y revisa los valores
+mkdir -p secretos             # copia aquí la clave JSON de la cuenta de servicio como vertex.json
 docker compose up --build
 ```
 
@@ -61,6 +62,9 @@ docker compose exec ingesta python -m ingesta onet
 
 # Correspondencias ESCO ↔ O*NET (necesita las dos anteriores)
 docker compose exec ingesta python -m ingesta esco-onet
+
+# Vectores semánticos de ESCO (necesita Vertex AI configurado)
+docker compose exec ingesta python -m ingesta embeddings
 
 # Ofertas de InfoJobs (requiere credenciales en .env)
 docker compose exec ingesta python -m ingesta infojobs --consulta "desarrollador" --paginas 2
@@ -102,7 +106,7 @@ Caddy obtiene automáticamente el certificado HTTPS para el dominio.
 - El archivo original del CV se elimina tras extraer la información.
 - Los datos identificativos se **seudonimizan** antes de enviarse a un modelo de lenguaje.
 - No se guarda audio: la voz se transcribe y se descarta.
-- Servidores dentro de la UE.
+- Servidores y procesamiento de los modelos de lenguaje dentro de la UE (Vertex AI, región europea).
 
 ## Licencia y datos de terceros
 
