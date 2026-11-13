@@ -75,6 +75,9 @@ docker compose exec ingesta python -m ingesta sepe-formacion
 
 # Ofertas y cursos vigentes de los servicios públicos de empleo (Cataluña y Castilla y León)
 docker compose exec ingesta python -m ingesta ofertas
+
+# Competencias ESCO de las ofertas pendientes (usa Vertex AI; ver docs/decisiones/0003)
+docker compose exec ingesta python -m ingesta competencias-ofertas --limite 50
 ```
 
 Las descargas se guardan en `data/` (no se versiona). Como alternativa a la API, ESCO también se puede cargar desde su descarga en CSV (español) colocada en `data/raw/esco/`: `python -m ingesta esco`.

@@ -43,6 +43,8 @@ class Ajustes(BaseSettings):
     )
 
     ingesta_cron: str = "0 3 * * *"
+    # Máximo de ofertas nuevas a las que se extraen competencias en cada ingesta nocturna
+    extraccion_max_ofertas: int = 300
     directorio_datos: str = "/data"
 
     @property

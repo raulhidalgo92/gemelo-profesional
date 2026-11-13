@@ -36,6 +36,8 @@ En cada carga nocturna:
 - Se borran las ofertas que ya no aparecen en la fuente: solo se conservan las vigentes.
 - Feina Activa no indica el periodo del salario; las cifras inferiores a 6.000 € se consideran mensuales (`salario_periodo`).
 
+Después de cargarlas, se extraen las competencias ESCO de las ofertas nuevas (como mucho `EXTRACCION_MAX_OFERTAS` por noche) con el procedimiento descrito en [la decisión 0003](decisiones/0003-extraccion-competencias.md).
+
 Además, el usuario puede pegar cualquier oferta para analizarla («pega la oferta»).
 
 ## Formación
