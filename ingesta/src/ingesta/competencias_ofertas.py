@@ -5,6 +5,9 @@
 Se procesan primero las más recientes y como mucho `limite` en cada ejecución, para
 controlar el gasto. Una oferta que falla se queda pendiente y se reintenta la próxima vez.
 Al terminar se registran los tokens consumidos para conocer el coste real.
+
+`recalcular_ocupaciones` vuelve a estimar solo la ocupación de las ofertas ya procesadas,
+por ejemplo tras cambiar el procedimiento, sin repetir la extracción de competencias.
 """
 
 import logging
@@ -21,7 +24,6 @@ from ingesta.fuentes.embeddings import con_reintentos
 log = logging.getLogger(__name__)
 
 HILOS = 8
-UMBRAL_OCUPACION = 0.7
 
 
 def pendientes(limite: int) -> list[tuple[int, str, str]]:
@@ -62,29 +64,32 @@ def procesar_oferta(ia: ClienteIA, oferta_id: int, titulo: str, texto: str | Non
             .where(Oferta.id == oferta_id)
             .values(
                 procesada_en=func.now(),
-                ocupacion_uri=(
-                    ocupacion.uri if ocupacion and ocupacion.similitud >= UMBRAL_OCUPACION else None
-                ),
+                ocupacion_uri=ocupacion.uri if ocupacion else None,
             )
         )
         s.commit()
     return len(detectadas)
 
 
-def procesar(limite: int) -> int:
-    ia = cliente_ia()
-    ofertas = pendientes(limite)
-    log.info("Extracción de competencias: %d ofertas pendientes (límite %d)", len(ofertas), limite)
+def _en_paralelo(ia: ClienteIA, funcion, ofertas: list[tuple]) -> list:
+    """Aplica `funcion(ia, *oferta)` en varios hilos; None en las ofertas que fallan."""
 
-    def tarea(oferta: tuple[int, str, str]) -> int | None:
+    def tarea(oferta: tuple):
         try:
-            return procesar_oferta(ia, *oferta)
+            return funcion(ia, *oferta)
         except ErrorIA as e:  # se queda pendiente para la próxima ejecución
             log.warning("Oferta %d sin procesar: %s", oferta[0], str(e)[:150])
             return None
 
     with ThreadPoolExecutor(HILOS) as hilos:
-        resultados = list(hilos.map(tarea, ofertas))
+        return list(hilos.map(tarea, ofertas))
+
+
+def procesar(limite: int) -> int:
+    ia = cliente_ia()
+    ofertas = pendientes(limite)
+    log.info("Extracción de competencias: %d ofertas pendientes (límite %d)", len(ofertas), limite)
+    resultados = _en_paralelo(ia, procesar_oferta, ofertas)
 
     hechas = [r for r in resultados if r is not None]
     log.info(
@@ -95,3 +100,35 @@ def procesar(limite: int) -> int:
         dict(ia.uso),
     )
     return len(hechas)
+
+
+def recalcular_ocupacion(ia: ClienteIA, oferta_id: int, titulo: str) -> bool:
+    """Vuelve a estimar la ocupación de una oferta. Devuelve si se ha encontrado."""
+    with sesion() as s:
+        ocupacion = con_reintentos(ocupacion_probable, s, ia, titulo)
+        s.execute(
+            update(Oferta)
+            .where(Oferta.id == oferta_id)
+            .values(ocupacion_uri=ocupacion.uri if ocupacion else None)
+        )
+        s.commit()
+    return ocupacion is not None
+
+
+def recalcular_ocupaciones(limite: int | None = None, solo_sin_ocupacion: bool = False) -> int:
+    ia = cliente_ia()
+    with sesion() as s:
+        consulta = select(Oferta.id, Oferta.titulo).where(Oferta.procesada_en.is_not(None))
+        if solo_sin_ocupacion:
+            consulta = consulta.where(Oferta.ocupacion_uri.is_(None))
+        ofertas = [tuple(f) for f in s.execute(consulta.order_by(Oferta.id).limit(limite))]
+    log.info("Recalculando la ocupación de %d ofertas", len(ofertas))
+    resultados = _en_paralelo(ia, recalcular_ocupacion, ofertas)
+    log.info(
+        "Con ocupación: %d. Sin ocupación: %d. Fallidas: %d. Tokens: %s",
+        resultados.count(True),
+        resultados.count(False),
+        resultados.count(None),
+        dict(ia.uso),
+    )
+    return resultados.count(True)
