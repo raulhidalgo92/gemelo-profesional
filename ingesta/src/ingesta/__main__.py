@@ -9,7 +9,7 @@ Ejemplos (dentro del contenedor):
     python -m ingesta esco-onet
     python -m ingesta embeddings
     python -m ingesta ine
-    python -m ingesta infojobs --consulta "desarrollador" --paginas 5
+    python -m ingesta ofertas
     python -m ingesta programador
 """
 
@@ -48,7 +48,11 @@ def main() -> None:
     s = sub.add_parser("ine", help="Carga salarios por ocupación del INE y la tabla CNO ↔ ISCO")
     s.add_argument("--dir", type=Path, default=raiz / "ine")
 
-    s = sub.add_parser("infojobs", help="Descarga ofertas de la API de InfoJobs")
+    sub.add_parser("ofertas", help="Descarga las ofertas de los servicios públicos de empleo")
+
+    s = sub.add_parser(
+        "infojobs", help="Descarga ofertas de la API de InfoJobs (requiere credenciales)"
+    )
     s.add_argument("--consulta", default="")
     s.add_argument("--paginas", type=int, default=5)
 
@@ -81,6 +85,10 @@ def main() -> None:
         from ingesta.fuentes import ine
 
         ine.cargar(args.dir)
+    elif args.orden == "ofertas":
+        from ingesta import programador
+
+        programador.ingesta_nocturna()
     elif args.orden == "infojobs":
         from ingesta.fuentes import infojobs
 

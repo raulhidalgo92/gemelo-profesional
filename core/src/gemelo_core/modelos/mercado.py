@@ -119,13 +119,13 @@ class MapeoEscoOnet(Base):
 
 
 class Oferta(Base):
-    """Oferta de empleo normalizada, venga de EURES, InfoJobs o pegada por el usuario."""
+    """Oferta de empleo normalizada, venga de un servicio público de empleo o del usuario."""
 
     __tablename__ = "oferta"
     __table_args__ = (UniqueConstraint("fuente", "id_externo"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    fuente: Mapped[str] = mapped_column(String(32), index=True)  # eures | infojobs | usuario
+    fuente: Mapped[str] = mapped_column(String(32), index=True)  # feina_activa | ecyl | usuario
     id_externo: Mapped[str] = mapped_column(String(128))
     titulo: Mapped[str] = mapped_column(String(512))
     empresa: Mapped[str | None] = mapped_column(String(255))
@@ -133,6 +133,7 @@ class Oferta(Base):
     ubicacion: Mapped[str | None] = mapped_column(String(255))
     salario_min: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     salario_max: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    salario_periodo: Mapped[str | None] = mapped_column(String(8))  # mes | año
     texto: Mapped[str | None] = mapped_column(Text)
     url: Mapped[str | None] = mapped_column(String(1024))
     publicada_en: Mapped[date | None] = mapped_column(Date, index=True)
