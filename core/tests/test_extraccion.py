@@ -4,7 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from gemelo_core.extraccion import Candidata, elegir, proponer_terminos, texto_eleccion
+from gemelo_core.extraccion import (
+    Candidata,
+    elegir,
+    elegir_ocupacion,
+    nombrar_puesto,
+    proponer_terminos,
+    texto_eleccion,
+)
 from gemelo_core.ia import ErrorIA
 
 
@@ -69,3 +76,21 @@ def test_elige_candidatas_y_descarta_indices_invalidos():
 def test_null_significa_que_ninguna_candidata_encaja():
     respuesta = {"elecciones": [{"termino": 1, "candidata": None}]}
     assert elegir(IAFalsa(respuesta), "Limpieza", ["puntualidad"], [PUNTUALIDAD]) == []
+
+
+CARPINTERO = [
+    Candidata("o1", "cartero/cartera", 0.62),
+    Candidata("o2", "carpintero/carpintera", 0.61),
+]
+
+
+def test_nombra_el_puesto_o_ninguno():
+    assert nombrar_puesto(IAFalsa({"puesto": " carpintero "}), "FUSTERS/ES") == "carpintero"
+    assert nombrar_puesto(IAFalsa({"puesto": None}), "OFERTA 123") is None
+
+
+def test_elige_la_ocupacion_indicada_e_ignora_indices_invalidos():
+    elegida = elegir_ocupacion(IAFalsa({"candidata": 2}), "FUSTERS/ES", "carpintero", CARPINTERO)
+    assert elegida == CARPINTERO[1]
+    assert elegir_ocupacion(IAFalsa({"candidata": 7}), "x", "carpintero", CARPINTERO) is None
+    assert elegir_ocupacion(IAFalsa({"candidata": None}), "x", "carpintero", CARPINTERO) is None
