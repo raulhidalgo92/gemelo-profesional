@@ -31,7 +31,7 @@ La novedad es el **ciclo cerrado**: las respuestas de las entrevistas simuladas 
 | Carpeta     | Servicio  | Tecnología                                   | Función |
 |-------------|-----------|----------------------------------------------|---------|
 | `core/`     | —         | Python 3.12, SQLAlchemy 2, pgvector          | Modelo de datos, configuración, cliente de IA y seudonimización compartidos |
-| `ingesta/`  | `ingesta` | Python, APScheduler                          | Carga de ESCO, O*NET, INE y ofertas nocturnas de servicios públicos de empleo |
+| `ingesta/`  | `ingesta` | Python, APScheduler                          | Carga de ESCO, O*NET, INE, catálogo del SEPE y ofertas y cursos nocturnos |
 | `backend/`  | `backend` | FastAPI, Alembic                             | API REST (`/api`), migraciones |
 | `frontend/` | `frontend`| Angular 21                                   | Interfaz web |
 | `db/`       | `db`      | PostgreSQL 17 + pgvector + pg_trgm           | Mercado laboral y gemelos de usuario |
@@ -70,7 +70,10 @@ docker compose exec ingesta python -m ingesta embeddings
 # Salarios por ocupación del INE (API pública, sin registro)
 docker compose exec ingesta python -m ingesta ine
 
-# Ofertas vigentes de los servicios públicos de empleo (Cataluña y Castilla y León)
+# Catálogo de especialidades formativas del SEPE (ficheros exportados en data/raw/sepe/)
+docker compose exec ingesta python -m ingesta sepe-formacion
+
+# Ofertas y cursos vigentes de los servicios públicos de empleo (Cataluña y Castilla y León)
 docker compose exec ingesta python -m ingesta ofertas
 ```
 
@@ -114,4 +117,4 @@ Caddy obtiene automáticamente el certificado HTTPS para el dominio.
 
 ## Licencia y datos de terceros
 
-Código bajo licencia Apache 2.0. Los datos de ESCO, O*NET, INE y de los servicios públicos de empleo **no** se incluyen en el repositorio y se usan según sus propias condiciones (ver [NOTICE](NOTICE)).
+Código bajo licencia Apache 2.0. Los datos de ESCO, O*NET, INE, SEPE y de los servicios públicos de empleo **no** se incluyen en el repositorio y se usan según sus propias condiciones (ver [NOTICE](NOTICE)).

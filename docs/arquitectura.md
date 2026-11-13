@@ -42,6 +42,10 @@
 - `oferta`, `oferta_competencia`: ofertas normalizadas y sus competencias ESCO.
 - `estadistica_salarial`, `correspondencia_cno_isco`: salarios agregados del INE por ocupación CNO-11 y su enlace con ISCO-08 (y, por tanto, con ESCO).
 
+**Formación**
+- `especialidad_formativa`, `especialidad_ocupacion`, `itinerario_formativo`: catálogo oficial del SEPE y sus ocupaciones relacionadas (CNO-11), que lo enlazan con ESCO.
+- `curso`: cursos programados por los servicios públicos de empleo (fecha, lugar y modalidad).
+
 **Usuario**
 - `usuario`: cuenta y consentimiento RGPD.
 - `gemelo`: gemelo profesional (ocupación actual, nivel de inglés, trayectoria seudonimizada).
