@@ -12,12 +12,10 @@ import html
 import logging
 import re
 
-from sqlalchemy import delete
-
 from gemelo_core.db import sesion
 from gemelo_core.modelos import Oferta
 from gemelo_core.seudonimizacion import eliminar_datos_contacto
-from ingesta.fuentes._util import lotes, upsert
+from ingesta.fuentes._util import sustituir_vigentes
 
 log = logging.getLogger(__name__)
 
@@ -41,13 +39,8 @@ def guardar(fuente: str, ofertas: list[dict]) -> int:
         log.warning("%s: no se ha recibido ninguna oferta, se conservan las anteriores", fuente)
         return 0
     ofertas = [limpiar(o) for o in ofertas]
-    ids = [o["id_externo"] for o in ofertas]
     with sesion() as s:
-        for lote in lotes(ofertas, 500):
-            upsert(s, Oferta, lote, ["fuente", "id_externo"])
-        retiradas = s.execute(
-            delete(Oferta).where(Oferta.fuente == fuente, Oferta.id_externo.not_in(ids))
-        ).rowcount
+        vigentes, retiradas = sustituir_vigentes(s, Oferta, fuente, ofertas)
         s.commit()
-    log.info("%s: %d ofertas vigentes, %d retiradas", fuente, len(ofertas), retiradas)
-    return len(ofertas)
+    log.info("%s: %d ofertas vigentes, %d retiradas", fuente, vigentes, retiradas)
+    return vigentes
