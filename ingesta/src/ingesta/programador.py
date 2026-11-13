@@ -13,9 +13,9 @@ log = logging.getLogger(__name__)
 
 
 def ingesta_nocturna() -> None:
-    from ingesta.fuentes import eures, infojobs
+    from ingesta.fuentes import ecyl, feina_activa
 
-    for nombre, tarea in (("infojobs", infojobs.ingerir), ("eures", eures.ingerir)):
+    for nombre, tarea in (("feina_activa", feina_activa.ingerir), ("ecyl", ecyl.ingerir)):
         try:
             tarea()
         except Exception:  # una fuente caída no debe parar las demás
