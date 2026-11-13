@@ -1,6 +1,6 @@
 # Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 # SPDX-License-Identifier: Apache-2.0
-"""Programación de la ingesta nocturna de ofertas."""
+"""Programación de la ingesta nocturna de ofertas y cursos."""
 
 import logging
 
@@ -13,13 +13,25 @@ log = logging.getLogger(__name__)
 
 
 def ingesta_nocturna() -> None:
-    from ingesta.fuentes import ecyl, feina_activa
+    from ingesta.fuentes import cursos_soc, ecyl, feina_activa
 
-    for nombre, tarea in (("feina_activa", feina_activa.ingerir), ("ecyl", ecyl.ingerir)):
+    tareas = (
+        ("feina_activa", feina_activa.ingerir),
+        ("ecyl", ecyl.ingerir),
+        ("cursos_soc", cursos_soc.ingerir),
+    )
+    for nombre, tarea in tareas:
         try:
             tarea()
         except Exception:  # una fuente caída no debe parar las demás
             log.exception("Fallo en la ingesta de %s", nombre)
+
+    from ingesta import competencias_ofertas
+
+    try:
+        competencias_ofertas.procesar(ajustes().extraccion_max_ofertas)
+    except Exception:
+        log.exception("Fallo en la extracción de competencias")
 
 
 def iniciar() -> None:

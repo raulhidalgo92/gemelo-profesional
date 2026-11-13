@@ -12,6 +12,8 @@
 | EURES | Ofertas europeas | Sin API pública documentada | — | Sin vía de acceso autorizada |
 | INE | Ganancia bruta anual por ocupación CNO-11: percentiles por subgrupo (Encuesta Cuatrienal 2022) y media por gran grupo 2015-2024 (Encuesta Anual) | API JSON pública (Tempus), sin registro (`ine`) | Anual | Cargado (608 datos; 98,7 % de las ocupaciones ESCO con salario de su subgrupo) |
 | Correspondencia CNO-11 ↔ CIUO-08 (INE) | Enlace entre la clasificación española de ocupaciones y la ISCO-08 que usa ESCO | Descarga automática del XLS oficial | Una vez | Cargado (541 correspondencias) |
+| Catálogo de Especialidades Formativas (SEPE) | 7.544 especialidades y 151 itinerarios oficiales, con sus ocupaciones relacionadas (CNO-11) | Exportación a Excel desde el buscador oficial del SEPE (`sepe-formacion`) | Al cambiar el catálogo | Cargado (exportación del 13-11-2026) |
+| Cursos del SOC (Generalitat de Catalunya) | Cursos programados de formación ocupacional y continua | JSON abierto, sin registro (`ofertas`) | Cada noche | Cargado (≈390 cursos) |
 | Cedefop | Indicadores de competencias y demanda | Descarga | Anual | Pendiente |
 | Usuario | CV, perfil de LinkedIn en PDF, entrevistas | Subida en la aplicación | Al usarla | Pendiente |
 
@@ -34,7 +36,22 @@ En cada carga nocturna:
 - Se borran las ofertas que ya no aparecen en la fuente: solo se conservan las vigentes.
 - Feina Activa no indica el periodo del salario; las cifras inferiores a 6.000 € se consideran mensuales (`salario_periodo`).
 
+Después de cargarlas, se extraen las competencias ESCO de las ofertas nuevas (como mucho `EXTRACCION_MAX_OFERTAS` por noche) con el procedimiento descrito en [la decisión 0003](decisiones/0003-extraccion-competencias.md).
+
 Además, el usuario puede pegar cualquier oferta para analizarla («pega la oferta»).
+
+## Formación
+
+El SEPE no publica su catálogo como datos abiertos (se ha solicitado en datos.gob.es), pero su buscador oficial permite exportarlo y su aviso legal autoriza la reutilización citando «Origen de los datos: SEPE» y la fecha. Para actualizarlo:
+
+1. Entrar en el [buscador del catálogo](https://sede.sepe.gob.es/FOET_CATALOGO_EEFF_SEDE/flows/main), pestaña ESPECIALIDADES, sin filtros y con «Solo última versión».
+2. Buscar, pulsar «Exportar» y marcar «Ocupaciones relacionadas» y «Duración total de la parte presencial».
+3. Repetir en la pestaña ITINERARIOS.
+4. Guardar los ficheros en `data/raw/sepe/` como `especialidades-formativas-AAAAMMDD.xlsx` e `itinerarios-formativos-AAAAMMDD.xlsx` y ejecutar `python -m ingesta sepe-formacion` (usa el más reciente).
+
+Cada especialidad declara sus ocupaciones con un código de 8 dígitos cuyos 4 primeros son la CNO-11. Con la correspondencia CNO-11 ↔ ISCO-08 del INE se enlaza con las ocupaciones ESCO sin necesidad de IA: el 93,9 % de las ocupaciones ESCO tiene formación oficial relacionada.
+
+Endpoint: `GET /api/formacion/especialidades?ocupacion=<URI ESCO>`, con el motivo de cada recomendación.
 
 ## Restricciones
 
