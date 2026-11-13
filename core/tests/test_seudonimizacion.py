@@ -1,6 +1,6 @@
 # Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 # SPDX-License-Identifier: Apache-2.0
-from gemelo_core.seudonimizacion import seudonimizar
+from gemelo_core.seudonimizacion import eliminar_datos_contacto, seudonimizar
 
 
 def test_sustituye_datos_identificativos():
@@ -23,3 +23,15 @@ def test_es_reversible():
     original = "Contacto: juan@ejemplo.com"
     r = seudonimizar(original)
     assert r.revertir(r.texto) == original
+
+
+def test_elimina_datos_de_contacto_de_una_oferta():
+    texto = (
+        "Se busca soldador. Enviar CV a rrhh@empresa.es o llamar al 983 123 456, "
+        "preguntar por María López. Persona de contacto: Sr. Gómez."
+    )
+    limpio = eliminar_datos_contacto(texto)
+    for dato in ("rrhh@empresa.es", "983 123 456", "María", "López", "Gómez"):
+        assert dato not in limpio
+    assert limpio.startswith("Se busca soldador.")
+    assert "preguntar por [contacto]" in limpio

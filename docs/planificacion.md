@@ -18,6 +18,6 @@ Contenido exigido: contexto, estado del arte con bibliografía y objetivos.
 | Semana | Memoria | Software |
 |--------|---------|----------|
 | 9–15 nov | Estructura en la plantilla, búsqueda bibliográfica | Iteración 0 |
-| 16–22 nov | Contexto: mercado laboral, competencias, clasificaciones (ESCO, O*NET) | Ingesta de InfoJobs, prototipo de extracción con LLM |
+| 16–22 nov | Contexto: mercado laboral, competencias, clasificaciones (ESCO, O*NET) | Ingesta de ofertas abiertas (SOC, ECyL), prototipo de extracción con LLM |
 | 23–29 nov | Estado del arte: recomendadores de empleo, LLM y ESCO, simuladores de entrevista, trayectorias | Iteración 1 (inicio) |
 | 30 nov–6 dic | Objetivos SMART y metodología, revisión de citas APA | Iteración 1 (cierre) |

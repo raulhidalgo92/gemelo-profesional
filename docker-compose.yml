@@ -39,6 +39,7 @@ services:
       - ./backend/migrations:/srv/backend/migrations
       - ./backend/tests:/srv/backend/tests
       - ./core/src/gemelo_core:/srv/core/src/gemelo_core
+      - ./core/tests:/srv/core/tests
       - ./secretos:/run/secretos:ro
     command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
 
@@ -72,6 +73,19 @@ services:
       - "${PUERTO_WEB:-4200}:4200"
     volumes:
       - ./frontend/src:/app/src
+
+  # Visor web de la base de datos (solo desarrollo, accesible solo desde este equipo)
+  adminer:
+    container_name: gemelo-adminer
+    image: adminer:5.4.1
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: pepa-linha
+    ports:
+      - "127.0.0.1:${PUERTO_ADMINER:-8090}:8080"
 
 volumes:
   pgdata:

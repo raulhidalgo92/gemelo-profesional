@@ -31,7 +31,7 @@ La novedad es el **ciclo cerrado**: las respuestas de las entrevistas simuladas 
 | Carpeta     | Servicio  | Tecnología                                   | Función |
 |-------------|-----------|----------------------------------------------|---------|
 | `core/`     | —         | Python 3.12, SQLAlchemy 2, pgvector          | Modelo de datos, configuración, cliente de IA y seudonimización compartidos |
-| `ingesta/`  | `ingesta` | Python, APScheduler                          | Carga de ESCO, O*NET, INE, Cedefop y ofertas nocturnas (EURES, InfoJobs) |
+| `ingesta/`  | `ingesta` | Python, APScheduler                          | Carga de ESCO, O*NET, INE y ofertas nocturnas de servicios públicos de empleo |
 | `backend/`  | `backend` | FastAPI, Alembic                             | API REST (`/api`), migraciones |
 | `frontend/` | `frontend`| Angular 21                                   | Interfaz web |
 | `db/`       | `db`      | PostgreSQL 17 + pgvector + pg_trgm           | Mercado laboral y gemelos de usuario |
@@ -50,6 +50,7 @@ docker compose up --build
 
 - Interfaz: http://localhost:4200
 - API y documentación interactiva: http://localhost:8000/api/docs
+- Visor de la base de datos (Adminer): http://localhost:8090 (servidor `db`, usuario y contraseña de `.env`)
 
 ### Cargar los datos de referencia
 
@@ -69,8 +70,8 @@ docker compose exec ingesta python -m ingesta embeddings
 # Salarios por ocupación del INE (API pública, sin registro)
 docker compose exec ingesta python -m ingesta ine
 
-# Ofertas de InfoJobs (requiere credenciales en .env)
-docker compose exec ingesta python -m ingesta infojobs --consulta "desarrollador" --paginas 2
+# Ofertas vigentes de los servicios públicos de empleo (Cataluña y Castilla y León)
+docker compose exec ingesta python -m ingesta ofertas
 ```
 
 Las descargas se guardan en `data/` (no se versiona). Como alternativa a la API, ESCO también se puede cargar desde su descarga en CSV (español) colocada en `data/raw/esco/`: `python -m ingesta esco`.
@@ -113,4 +114,4 @@ Caddy obtiene automáticamente el certificado HTTPS para el dominio.
 
 ## Licencia y datos de terceros
 
-Código bajo licencia Apache 2.0. Los datos de ESCO, O*NET, INE, Cedefop, EURES e InfoJobs **no** se incluyen en el repositorio y se usan según sus propias condiciones (ver [NOTICE](NOTICE)).
+Código bajo licencia Apache 2.0. Los datos de ESCO, O*NET, INE y de los servicios públicos de empleo **no** se incluyen en el repositorio y se usan según sus propias condiciones (ver [NOTICE](NOTICE)).

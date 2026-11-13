@@ -54,3 +54,23 @@ def seudonimizar(texto: str, nombres: list[str] | None = None) -> Seudonimizado:
             texto = patron.sub(lambda m: sustituir("NOMBRE", m.group(0)), texto)
 
     return Seudonimizado(texto=texto, tabla=tabla)
+
+
+# Nombre propio tras expresiones como «preguntar por» o «persona de contacto:».
+_NOMBRE_CONTACTO = re.compile(
+    r"(?P<antes>(?i:(?:preguntar|pregunte|contactar|contacte|dirigirse)\s+(?:por|con|a)"
+    r"|persona\s+de\s+contacto\s*:?))\s+"
+    r"(?:(?:D\.|Dña\.|Sr\.|Sra\.)\s*)?"
+    r"[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,2}",
+)
+
+
+def eliminar_datos_contacto(texto: str) -> str:
+    """Borra de forma irreversible emails, teléfonos, documentos y nombres de contacto.
+
+    Se usa con datos de terceros (por ejemplo, ofertas de empleo) que no necesitamos
+    conservar: a diferencia de `seudonimizar`, no guarda la correspondencia.
+    """
+    for tipo in ("URL_PERFIL", "EMAIL", "DNI", "NIE", "TELEFONO"):
+        texto = PATRONES[tipo].sub("[contacto]", texto)
+    return _NOMBRE_CONTACTO.sub(lambda m: f"{m.group('antes')} [contacto]", texto)

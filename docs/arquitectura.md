@@ -4,7 +4,7 @@
 
 ```
  ① REFERENCIA (1 vez)     ② OFERTAS (cada noche)   ③ USUARIO (al usarla)       ④ BAJO DEMANDA
- ESCO · O*NET · INE        EURES · InfoJobs          CV · LinkedIn (PDF)          "Pega la oferta"
+ ESCO · O*NET · INE        SOC · ECyL (abiertos)     CV · LinkedIn (PDF)          "Pega la oferta"
  Cedefop                                             Entrevistas · Inglés         (LinkedIn u otra web)
         └──────────┬───────────┘                           └──────────┬──────────────┘
                    ▼                                                  ▼
