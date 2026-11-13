@@ -13,7 +13,9 @@ El resto del código solo conoce la interfaz `ClienteIA`. Hay dos implementacion
 """
 
 import json
+import threading
 from abc import ABC, abstractmethod
+from collections import Counter
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -34,6 +36,14 @@ class ErrorIA(RuntimeError):
 class ClienteIA(ABC):
     def __init__(self, cfg: Ajustes | None = None) -> None:
         self.cfg = cfg or ajustes()
+        # Tokens consumidos por modelo, para medir el coste real de cada proceso
+        self.uso: Counter[str] = Counter()
+        self._cerrojo = threading.Lock()
+
+    def contar_tokens(self, modelo: str, entrada: int, salida: int) -> None:
+        with self._cerrojo:
+            self.uso[f"{modelo}:entrada"] += entrada
+            self.uso[f"{modelo}:salida"] += salida
 
     @abstractmethod
     def completar(
@@ -95,12 +105,19 @@ class ClienteVertex(ClienteIA):
             temperature=temperatura,
             response_mime_type="application/json" if json_salida else None,
         )
+        modelo = modelo or self.cfg.llm_modelo
         try:
             r = self._cliente.models.generate_content(
-                model=modelo or self.cfg.llm_modelo, contents=contenidos, config=config
+                model=modelo, contents=contenidos, config=config
             )
         except Exception as e:
             raise ErrorIA(f"Vertex AI: {e}") from e
+        if r.usage_metadata:
+            self.contar_tokens(
+                modelo,
+                r.usage_metadata.prompt_token_count or 0,
+                r.usage_metadata.candidates_token_count or 0,
+            )
         return r.text or ""
 
     def embeddings(self, textos: list[str], *, tarea: str | None = None) -> list[list[float]]:
@@ -145,7 +162,12 @@ class ClienteCompatibleOpenAI(ClienteIA):
         r = self._http.post("/chat/completions", json=cuerpo)
         if r.status_code >= 400:
             raise ErrorIA(f"LLM {r.status_code}: {r.text[:300]}")
-        return r.json()["choices"][0]["message"]["content"]
+        datos = r.json()
+        uso = datos.get("usage") or {}
+        self.contar_tokens(
+            cuerpo["model"], uso.get("prompt_tokens", 0), uso.get("completion_tokens", 0)
+        )
+        return datos["choices"][0]["message"]["content"]
 
     def embeddings(self, textos: list[str], *, tarea: str | None = None) -> list[list[float]]:
         r = self._http.post(

@@ -37,7 +37,7 @@ def texto_concepto(titulo: str, alternativos: str | None, descripcion: str | Non
     return "\n".join(partes)[:MAX_CARACTERES]
 
 
-def _con_reintentos(funcion, *args, intentos: int = 5):
+def con_reintentos(funcion, *args, intentos: int = 5):
     for intento in range(1, intentos + 1):
         try:
             return funcion(*args)
@@ -51,7 +51,7 @@ def _con_reintentos(funcion, *args, intentos: int = 5):
 def vectorizar(cliente: ClienteIA, textos: list[str]) -> list[list[float]]:
     """Calcula embeddings por lotes; si el modelo no admite lotes, de uno en uno en paralelo."""
     try:
-        return _con_reintentos(lambda t: cliente.embeddings(t, tarea=TAREA_DOCUMENTO), textos)
+        return con_reintentos(lambda t: cliente.embeddings(t, tarea=TAREA_DOCUMENTO), textos)
     except ErrorIA:
         if len(textos) == 1:
             raise
@@ -59,7 +59,7 @@ def vectorizar(cliente: ClienteIA, textos: list[str]) -> list[list[float]]:
     with ThreadPoolExecutor(HILOS) as hilos:
         return list(
             hilos.map(
-                lambda t: _con_reintentos(
+                lambda t: con_reintentos(
                     lambda x: cliente.embeddings([x], tarea=TAREA_DOCUMENTO)[0], t
                 ),
                 textos,

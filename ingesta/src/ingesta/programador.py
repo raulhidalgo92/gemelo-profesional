@@ -26,6 +26,13 @@ def ingesta_nocturna() -> None:
         except Exception:  # una fuente caída no debe parar las demás
             log.exception("Fallo en la ingesta de %s", nombre)
 
+    from ingesta import competencias_ofertas
+
+    try:
+        competencias_ofertas.procesar(ajustes().extraccion_max_ofertas)
+    except Exception:
+        log.exception("Fallo en la extracción de competencias")
+
 
 def iniciar() -> None:
     cron = ajustes().ingesta_cron

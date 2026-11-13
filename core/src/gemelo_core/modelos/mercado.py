@@ -144,6 +144,8 @@ class Oferta(Base):
         ForeignKey("ocupacion.uri", ondelete="SET NULL"), index=True
     )
     embedding: Mapped[list[float] | None] = mapped_column(Vector(DIMENSION_EMBEDDING))
+    # Cuándo se extrajeron sus competencias (None = pendiente)
+    procesada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     competencias: Mapped[list["OfertaCompetencia"]] = relationship(
         back_populates="oferta", cascade="all, delete-orphan"
@@ -162,6 +164,7 @@ class OfertaCompetencia(Base):
         ForeignKey("competencia.uri", ondelete="CASCADE"), primary_key=True
     )
     confianza: Mapped[float] = mapped_column(Float, default=1.0)
+    termino: Mapped[str | None] = mapped_column(String(255))  # cómo lo decía la oferta
 
     oferta: Mapped[Oferta] = relationship(back_populates="competencias")
 
