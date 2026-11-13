@@ -11,6 +11,7 @@ Ejemplos (dentro del contenedor):
     python -m ingesta ine
     python -m ingesta ofertas
     python -m ingesta competencias-ofertas --limite 50
+    python -m ingesta ocupaciones-ofertas [--solo-sin-ocupacion]
     python -m ingesta sepe-formacion
     python -m ingesta programador
 """
@@ -55,6 +56,10 @@ def main() -> None:
     s = sub.add_parser("competencias-ofertas", help="Extrae competencias ESCO de las ofertas")
     s.add_argument("--limite", type=int, default=ajustes().extraccion_max_ofertas)
 
+    s = sub.add_parser("ocupaciones-ofertas", help="Recalcula la ocupación ESCO de las ofertas")
+    s.add_argument("--limite", type=int, default=None)
+    s.add_argument("--solo-sin-ocupacion", action="store_true")
+
     s = sub.add_parser("sepe-formacion", help="Carga el catálogo de especialidades del SEPE")
     s.add_argument("--dir", type=Path, default=raiz / "sepe")
 
@@ -97,6 +102,10 @@ def main() -> None:
         from ingesta import competencias_ofertas
 
         competencias_ofertas.procesar(args.limite)
+    elif args.orden == "ocupaciones-ofertas":
+        from ingesta import competencias_ofertas
+
+        competencias_ofertas.recalcular_ocupaciones(args.limite, args.solo_sin_ocupacion)
     elif args.orden == "sepe-formacion":
         from ingesta.fuentes import sepe_formacion
 
