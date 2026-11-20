@@ -10,6 +10,9 @@ Tres pasos, siguiendo la estrategia de Clavié y Soulié (2023):
 Un umbral de similitud no basta: las similitudes de buenas y malas parejas se solapan
 («puntualidad» se parece más a «garantizar el horario de los trenes» que «español» a
 «español»). Se conserva el término original para explicar cada competencia detectada.
+
+La ocupación de la oferta se obtiene igual: el modelo nombra el puesto en español, se
+buscan las ocupaciones ESCO más parecidas y el modelo elige una o ninguna.
 """
 
 from dataclasses import dataclass
@@ -25,7 +28,9 @@ from gemelo_core.modelos import Competencia, Ocupacion
 _PROMPTS = Path(__file__).parent / "prompts"
 PROMPT_TERMINOS = (_PROMPTS / "extraccion_competencias.md").read_text("utf-8")
 PROMPT_ELECCION = (_PROMPTS / "eleccion_competencias.md").read_text("utf-8")
-VERSION_PROMPTS = "1"
+PROMPT_PUESTO = (_PROMPTS / "puesto_oferta.md").read_text("utf-8")
+PROMPT_OCUPACION = (_PROMPTS / "eleccion_ocupacion.md").read_text("utf-8")
+VERSION_PROMPTS = "2"
 
 MAX_CARACTERES = 4000
 MAX_TERMINOS = 20
@@ -44,6 +49,14 @@ class Eleccion(BaseModel):
 
 class RespuestaEleccion(BaseModel):
     elecciones: list[Eleccion]
+
+
+class RespuestaPuesto(BaseModel):
+    puesto: str | None
+
+
+class RespuestaOcupacion(BaseModel):
+    candidata: int | None
 
 
 @dataclass(frozen=True)
@@ -153,11 +166,42 @@ def asociar_a_esco(
     return elegir(ia, contexto, [t for t, _ in con_candidatas], [c for _, c in con_candidatas])
 
 
+def nombrar_puesto(ia: ClienteIA, titulo: str, modelo: str | None = None) -> str | None:
+    """Nombre en español de la ocupación de una oferta («FUSTERS/ES» → «carpintero»)."""
+    mensajes = [
+        {"role": "system", "content": PROMPT_PUESTO},
+        {"role": "user", "content": f"Título: {titulo}"},
+    ]
+    puesto = _pedir_json(ia, mensajes, RespuestaPuesto, modelo).puesto
+    return puesto.strip() if puesto and puesto.strip() else None
+
+
+def elegir_ocupacion(
+    ia: ClienteIA, titulo: str, puesto: str, opciones: list[Candidata], modelo: str | None = None
+) -> Candidata | None:
+    """El modelo elige la ocupación ESCO del puesto entre las candidatas (o ninguna)."""
+    lineas = [f"Oferta: {titulo}", f"Puesto: {puesto}", "", "Candidatas:"]
+    lineas += [f"{i}) {c.titulo}" for i, c in enumerate(opciones, start=1)]
+    mensajes = [
+        {"role": "system", "content": PROMPT_OCUPACION},
+        {"role": "user", "content": "\n".join(lineas)},
+    ]
+    n = _pedir_json(ia, mensajes, RespuestaOcupacion, modelo).candidata
+    return opciones[n - 1] if n is not None and 1 <= n <= len(opciones) else None
+
+
 def ocupacion_probable(s: Session, ia: ClienteIA, titulo: str) -> Candidata | None:
-    """Ocupación ESCO más parecida al título de una oferta."""
-    [vector] = ia.embeddings([titulo], tarea=TAREA_CONSULTA)
-    mejores = candidatas(s, Ocupacion, vector, k=1)
-    return mejores[0] if mejores else None
+    """Ocupación ESCO de una oferta: se nombra el puesto, se buscan candidatas y se elige.
+
+    Buscar directamente por el título falla con los títulos en catalán: «FUSTERS/ES»
+    queda más cerca de «cartero» que de «carpintero».
+    """
+    puesto = nombrar_puesto(ia, titulo)
+    if puesto is None:
+        return None
+    [vector] = ia.embeddings([puesto], tarea=TAREA_CONSULTA)
+    opciones = [c for c in candidatas(s, Ocupacion, vector) if c.similitud >= SIMILITUD_MINIMA]
+    return elegir_ocupacion(ia, titulo, puesto, opciones) if opciones else None
 
 
 def extraer_competencias(
