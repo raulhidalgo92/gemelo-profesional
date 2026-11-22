@@ -32,6 +32,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     ports:
       - "${PUERTO_API:-8000}:8000"
     volumes:
@@ -73,6 +75,14 @@ services:
       - "${PUERTO_WEB:-4200}:4200"
     volumes:
       - ./frontend/src:/app/src
+
+  # Recoge los correos de la aplicación sin enviarlos y los muestra en una web (solo desarrollo)
+  mailpit:
+    container_name: gemelo-mailpit
+    image: axllent/mailpit:v1.33.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PUERTO_CORREO:-8025}:8025"
 
   # Visor web de la base de datos (solo desarrollo, accesible solo desde este equipo)
   adminer:

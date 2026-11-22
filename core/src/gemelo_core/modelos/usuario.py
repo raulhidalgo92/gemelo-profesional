@@ -10,7 +10,7 @@ competencia y dispara el recálculo de trayectorias y encajes.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, SmallInteger, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,14 +22,47 @@ class Usuario(ConMarcasTiempo, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True)
+    nombre: Mapped[str] = mapped_column(String(80), default="")
     hash_contrasena: Mapped[str] = mapped_column(String(255))
     # RGPD: fecha y versión del texto de consentimiento aceptado
     consentimiento_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     consentimiento_version: Mapped[str | None] = mapped_column(String(16))
+    # La cuenta solo se puede usar tras confirmar el correo
+    verificado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Asistente de bienvenida terminado (o pospuesto) por el usuario
+    bienvenida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     gemelo: Mapped["Gemelo"] = relationship(
         back_populates="usuario", cascade="all, delete-orphan", uselist=False
     )
+
+
+class CodigoVerificacion(Base):
+    """Código y enlace de activación de una cuenta. Se guardan solo sus resúmenes (hash)."""
+
+    __tablename__ = "codigo_verificacion"
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("usuario.id", ondelete="CASCADE"), primary_key=True
+    )
+    hash_codigo: Mapped[str] = mapped_column(String(64))
+    hash_enlace: Mapped[str] = mapped_column(String(64), unique=True)
+    intentos: Mapped[int] = mapped_column(SmallInteger, default=0)
+    expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    enviado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class SesionUsuario(Base):
+    """Sesión iniciada. La cookie lleva un token aleatorio; aquí solo se guarda su hash."""
+
+    __tablename__ = "sesion_usuario"
+
+    hash_token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("usuario.id", ondelete="CASCADE"), index=True
+    )
+    creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class Gemelo(ConMarcasTiempo, Base):

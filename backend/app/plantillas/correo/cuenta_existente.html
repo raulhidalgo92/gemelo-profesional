@@ -1,0 +1,7 @@
+{% extends "_base.html" %}
+{% block titulo %}Ya tienes una cuenta{% endblock %}
+{% block contenido %}
+<h1 style="margin:0 0 12px 0;font-size:22px;line-height:1.3;font-weight:600;letter-spacing:-0.02em;color:#17171c;">Hola, {{ nombre }}</h1>
+<p style="margin:0 0 24px 0;">Alguien ha intentado registrarse con tu correo, pero ya tienes una cuenta. Si fuiste tú, simplemente inicia sesión.</p>
+<a href="{{ url_publica }}/entrar" style="display:inline-block;padding:12px 22px;background:#17171c;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Iniciar sesión</a>
+{% endblock %}

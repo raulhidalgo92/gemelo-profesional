@@ -1,0 +1,10 @@
+Hola, {{ nombre }}:
+
+Tu código para activar la cuenta de Gemelo profesional es: {{ codigo }}
+
+También puedes activarla abriendo este enlace:
+{{ enlace }}
+
+El código y el enlace caducan en {{ minutos }} minutos.
+
+Si no te has registrado tú, ignora este correo: no se activará ninguna cuenta.
