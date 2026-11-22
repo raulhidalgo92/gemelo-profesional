@@ -4,7 +4,7 @@ import { Routes } from '@angular/router';
 
 import { MarcoAcceso } from './diseno/marco-acceso';
 import { MarcoApp } from './diseno/marco-app';
-import { bienvenidaHecha, conSesion, sinSesion } from './nucleo/guardas';
+import { bienvenidaHecha, conSesion, fueraDeLaApp, sinSesion } from './nucleo/guardas';
 
 export const routes: Routes = [
   // Acceso (sin sesión)
@@ -48,7 +48,9 @@ export const routes: Routes = [
   {
     path: 'privacidad',
     title: 'Privacidad · Gemelo profesional',
-    loadComponent: () => import('./paginas/acceso/privacidad').then((m) => m.PrivacidadPagina),
+    canMatch: [fueraDeLaApp],
+    loadComponent: () =>
+      import('./paginas/acceso/privacidad').then((m) => m.PrivacidadPublicaPagina),
   },
 
   // Bienvenida tras activar la cuenta
@@ -90,6 +92,11 @@ export const routes: Routes = [
         title: 'Entrenador',
         loadComponent: () =>
           import('./paginas/entrenador/entrenador').then((m) => m.EntrenadorPagina),
+      },
+      {
+        path: 'privacidad',
+        title: 'Privacidad · Gemelo profesional',
+        loadComponent: () => import('./paginas/acceso/privacidad').then((m) => m.PrivacidadPagina),
       },
     ],
   },

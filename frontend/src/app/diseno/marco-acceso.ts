@@ -16,21 +16,27 @@ import { Logo } from '../nucleo/ui/logo';
         class="relative hidden overflow-hidden bg-tinta p-12 text-white lg:flex lg:flex-col lg:justify-between"
       >
         <div
-          class="pointer-events-none absolute -top-40 -left-40 size-[36rem] rounded-full bg-acento/40 blur-3xl"
+          class="pointer-events-none absolute -top-48 -left-40 size-[38rem] rounded-full bg-acento/35 blur-3xl"
         ></div>
-        <div
-          class="pointer-events-none absolute -right-32 -bottom-48 size-[30rem] rounded-full bg-[#2fb8ff]/20 blur-3xl"
-        ></div>
+        <!-- El símbolo de la marca, a gran escala, como fondo -->
+        <svg
+          class="pointer-events-none absolute -right-72 -bottom-64 size-[44rem] opacity-[0.08]"
+          viewBox="0 0 32 32"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="16" r="9" fill="none" stroke="#fff" stroke-width="0.25" />
+          <circle cx="20" cy="16" r="9" fill="none" stroke="#fff" stroke-width="0.25" />
+        </svg>
 
-        <app-logo [claro]="true" class="relative" />
+        <app-logo [claro]="true" [tamano]="36" class="relative" />
 
-        <div class="relative max-w-md">
-          <h2 class="text-4xl leading-[1.1] font-semibold tracking-tight">
-            Tu carrera, con un plan que entiendes.
+        <div class="relative max-w-lg">
+          <h2 class="text-[40px] leading-[1.1] font-semibold tracking-tight xl:text-[46px]">
+            Tú pones el destino.<br />Tu gemelo, el camino.
           </h2>
-          <p class="mt-4 text-[17px] leading-relaxed text-white/65">
-            Un gemelo digital de tus competencias que te dice dónde encajas, qué aprender primero y
-            cómo llegar al puesto que quieres.
+          <p class="mt-6 max-w-md text-lg leading-relaxed text-balance text-white/65">
+            Un modelo digital de tus competencias que evoluciona contigo y convierte tu objetivo en
+            pasos concretos.
           </p>
           <ul class="mt-10 space-y-4 text-[15px] text-white/80">
             @for (v of ventajas; track v.texto) {
@@ -50,9 +56,9 @@ import { Logo } from '../nucleo/ui/logo';
       </aside>
 
       <main class="flex min-w-0 flex-col px-6 py-8 sm:px-10">
-        <app-logo class="lg:hidden" />
+        <app-logo [tamano]="32" class="lg:hidden" />
         <div class="flex flex-1 items-center justify-center py-10">
-          <div class="w-full max-w-[400px] animate-aparecer">
+          <div class="w-full max-w-[420px] animate-aparecer">
             <router-outlet />
           </div>
         </div>

@@ -19,11 +19,11 @@ const ESPERA_REENVIO = 60;
         <lucide-icon [img]="iconos.MailCheck" [size]="22" />
       </span>
       <p class="mb-3 text-[13px] font-medium tracking-wide text-acento uppercase">Paso 2 de 2</p>
-      <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Revisa tu correo</h1>
+      <h1 class="titulo-acceso">Revisa tu correo</h1>
       <p class="mt-2 text-tinta-suave">
-        Te hemos enviado un código de 6 cifras a
-        <span class="font-medium text-tinta">{{ email() }}</span
-        >. También puedes pulsar el botón del correo.
+        Introduce el código de 6 cifras enviado a
+        <span class="font-medium break-all text-tinta">{{ email() }}</span> o activa la cuenta desde
+        el mensaje.
       </p>
     </div>
 

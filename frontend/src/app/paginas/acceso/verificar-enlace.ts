@@ -18,9 +18,7 @@ import { SesionService, mensajeDeError } from '../../nucleo/sesion.service';
       <span class="mb-6 grid size-12 place-items-center rounded-2xl bg-error/8 text-error">
         <lucide-icon [img]="iconos.CircleAlert" [size]="22" />
       </span>
-      <h1 class="text-[28px] leading-tight font-semibold tracking-tight">
-        No hemos podido activarla
-      </h1>
+      <h1 class="titulo-acceso">No hemos podido activarla</h1>
       <p class="mt-2 text-tinta-suave">{{ error() }}</p>
       <div class="mt-8 flex gap-3">
         <a routerLink="/entrar" class="boton-primario">Iniciar sesión</a>
