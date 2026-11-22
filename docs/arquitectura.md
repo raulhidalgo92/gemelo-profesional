@@ -31,6 +31,7 @@
 | `backend` | API REST, autenticación, entradas ③ y ④, cálculo de encaje, recomendaciones y trayectorias. Ejecuta las migraciones al arrancar. | `db`, LLM, STT |
 | `frontend`| Interfaz de usuario. En producción, nginx sirve los estáticos y redirige `/api` al backend. | `backend` |
 | `caddy`   | (solo producción) HTTPS automático y proxy inverso. | `frontend` |
+| `mailpit` | (solo desarrollo) Recoge los correos de la aplicación y los muestra en una web. | — |
 
 `core/` es un paquete Python compartido por `backend` e `ingesta` para que ambos usen exactamente el mismo modelo de datos.
 
@@ -47,7 +48,8 @@
 - `curso`: cursos programados por los servicios públicos de empleo (fecha, lugar y modalidad).
 
 **Usuario**
-- `usuario`: cuenta y consentimiento RGPD.
+- `usuario`: cuenta, consentimiento RGPD (fecha y versión), activación del correo y fin del asistente de bienvenida.
+- `codigo_verificacion`: código y enlace de activación pendientes (solo su HMAC). `sesion_usuario`: sesiones abiertas (solo el HMAC del token de la cookie). Ver [decisión 0004](decisiones/0004-registro-y-sesiones.md).
 - `gemelo`: gemelo profesional (ocupación actual, nivel de inglés, trayectoria seudonimizada).
 - `gemelo_competencia`: nivel **declarado** y **demostrado** de cada competencia.
 - `evidencia`: qué respalda cada nivel (fragmento de CV, respuesta de entrevista, test).

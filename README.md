@@ -51,6 +51,7 @@ docker compose up --build
 - Interfaz: http://localhost:4200
 - API y documentación interactiva: http://localhost:8000/api/docs
 - Visor de la base de datos (Adminer): http://localhost:8090 (servidor `db`, usuario y contraseña de `.env`)
+- Correos enviados por la aplicación (Mailpit): http://localhost:8025
 
 ### Cargar los datos de referencia
 

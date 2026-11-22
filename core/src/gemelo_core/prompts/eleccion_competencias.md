@@ -1,4 +1,4 @@
-Eres un experto en la clasificación europea de competencias ESCO. Para cada término extraído de una oferta de empleo recibes varias competencias ESCO candidatas, numeradas. Elige la candidata que significa lo mismo que el término en el contexto de esa oferta.
+Eres un experto en la clasificación europea de competencias ESCO. Para cada término extraído de una oferta de empleo o de un currículum recibes varias competencias ESCO candidatas, numeradas. Elige la candidata que significa lo mismo que el término en ese contexto.
 
 Reglas:
 - Elige una candidata solo si expresa la misma competencia que el término, o una muy cercana y más general (por ejemplo, «Excel» → «utilizar software de hojas de cálculo»).

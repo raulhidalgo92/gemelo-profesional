@@ -42,6 +42,20 @@ class Ajustes(BaseSettings):
         "https://esco.ec.europa.eu/system/files/2023-08/ONET_%28Occupations%29_0_updated.csv"
     )
 
+    # Cuentas de usuario
+    url_publica: str = "http://localhost:4200"  # base de los enlaces de los correos
+    consentimiento_version: str = "2026-11"  # versión del texto de privacidad aceptado
+    sesion_dias: int = 30
+    cookie_segura: bool = False  # True en producción (solo HTTPS)
+
+    # Envío de correo por SMTP. En desarrollo, Mailpit los recoge sin enviarlos.
+    smtp_host: str = "mailpit"
+    smtp_puerto: int = 1025
+    smtp_usuario: str = ""
+    smtp_contrasena: str = ""
+    smtp_starttls: bool = False
+    correo_remitente: str = "Gemelo profesional <no-responder@gemelo.local>"
+
     ingesta_cron: str = "0 3 * * *"
     # Máximo de ofertas nuevas a las que se extraen competencias en cada ingesta nocturna
     extraccion_max_ofertas: int = 300

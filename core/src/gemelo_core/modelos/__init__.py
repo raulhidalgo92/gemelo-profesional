@@ -22,15 +22,18 @@ from gemelo_core.modelos.mercado import (
     TransicionOnet,
 )
 from gemelo_core.modelos.usuario import (
+    CodigoVerificacion,
     Entrevista,
     Evidencia,
     Gemelo,
     GemeloCompetencia,
+    SesionUsuario,
     Usuario,
 )
 
 __all__ = [
     "Base",
+    "CodigoVerificacion",
     "Competencia",
     "CorrespondenciaCnoIsco",
     "Curso",
@@ -49,5 +52,6 @@ __all__ = [
     "Oferta",
     "OfertaCompetencia",
     "TransicionOnet",
+    "SesionUsuario",
     "Usuario",
 ]

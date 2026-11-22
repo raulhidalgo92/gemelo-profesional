@@ -1,8 +1,48 @@
-<h1>🧠 Mi gemelo profesional</h1>
-<p class="suave">
-  Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte o
-  Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
-</p>
+<header class="mb-8">
+  <p class="text-sm text-tinta-tenue">Hola, {{ sesion.usuario()?.nombre }}</p>
+  <h1 class="mt-1 text-3xl font-semibold tracking-tight">Mi gemelo profesional</h1>
+  <p class="mt-2 max-w-2xl text-tinta-suave">
+    Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte o
+    Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
+  </p>
+</header>
+
+<section class="tarjeta mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h3 class="text-lg">Tus competencias</h3>
+    @if (misCompetencias()?.length) {
+      <span class="etiqueta">{{ misCompetencias()!.length }} declaradas en tu CV</span>
+    }
+  </div>
+  @switch (misCompetencias()?.length) {
+    @case (undefined) {
+      <p class="mt-3 text-tinta-tenue">Cargando…</p>
+    }
+    @case (0) {
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-fondo p-5">
+        <p class="text-tinta-suave">
+          Aún no has subido tu CV. Con él construimos tu gemelo en unos segundos.
+        </p>
+        <a routerLink="/bienvenida" class="boton-primario">
+          <lucide-icon [img]="iconoCv" [size]="18" />
+          Subir mi CV
+        </a>
+      </div>
+    }
+    @default {
+      <ul class="mt-4 flex flex-wrap gap-2">
+        @for (c of misCompetencias(); track c.uri) {
+          <li
+            class="rounded-full border border-borde bg-superficie px-3 py-1.5 text-sm first-letter:uppercase"
+            [title]="c.origen ? 'En tu CV: «' + c.origen + '»' : ''"
+          >
+            {{ c.titulo }}
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>
 
 <section class="rejilla">
   <article class="tarjeta">

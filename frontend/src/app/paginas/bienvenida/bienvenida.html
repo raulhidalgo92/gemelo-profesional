@@ -1,0 +1,247 @@
+<div class="flex min-h-dvh flex-col bg-fondo">
+  <header class="flex items-center justify-between px-6 py-5 sm:px-10">
+    <app-logo />
+    <button type="button" class="boton-texto text-sm" (click)="despues()">Lo haré luego</button>
+  </header>
+
+  <main class="flex flex-1 items-start justify-center px-6 pt-6 pb-16 sm:pt-12">
+    <div class="w-full max-w-xl">
+      <!-- Progreso -->
+      <ol class="mb-12 flex items-center gap-3" aria-label="Pasos">
+        @for (p of pasos; track p.titulo; let i = $index, ultimo = $last) {
+          <li class="flex items-center gap-3" [class.flex-1]="!ultimo">
+            <span
+              class="flex items-center gap-2 text-sm font-medium transition-colors"
+              [class]="i <= paso() ? 'text-tinta' : 'text-tinta-tenue'"
+              [attr.aria-current]="i === paso() ? 'step' : null"
+            >
+              <span
+                class="grid size-8 place-items-center rounded-full transition-colors"
+                [class]="
+                  i <= paso()
+                    ? 'bg-tinta text-white'
+                    : 'bg-superficie text-tinta-tenue ring-1 ring-borde'
+                "
+              >
+                <lucide-icon [img]="p.icono" [size]="15" />
+              </span>
+              <span class="hidden sm:inline">{{ p.titulo }}</span>
+            </span>
+            @if (!ultimo) {
+              <span class="h-px flex-1 bg-borde">
+                <span
+                  class="block h-px bg-tinta transition-all duration-500"
+                  [style.width.%]="i < paso() ? 100 : 0"
+                ></span>
+              </span>
+            }
+          </li>
+        }
+      </ol>
+
+      @switch (paso()) {
+        @case (0) {
+          <section class="animate-aparecer">
+            <h1 class="text-[32px] leading-tight font-semibold tracking-tight">
+              Hola, {{ nombre() }}. Vamos a crear tu gemelo.
+            </h1>
+            <p class="mt-3 text-[17px] leading-relaxed text-tinta-suave">
+              Tu gemelo es un modelo de tus competencias que se actualiza con lo que haces aquí. Con
+              él te diremos qué ofertas encajan contigo, qué aprender primero y qué caminos tienes
+              por delante.
+            </p>
+            <ul class="mt-8 space-y-3">
+              <li class="tarjeta flex gap-4">
+                <span class="text-sm font-semibold text-acento">1</span>
+                <div>
+                  <p class="font-medium">Sube tu currículum</p>
+                  <p class="text-sm text-tinta-suave">
+                    Extraemos tu experiencia y tus competencias.
+                  </p>
+                </div>
+              </li>
+              <li class="tarjeta flex gap-4">
+                <span class="text-sm font-semibold text-acento">2</span>
+                <div>
+                  <p class="font-medium">Revisa lo que hemos entendido</p>
+                  <p class="text-sm text-tinta-suave">Confirma, quita o añade competencias.</p>
+                </div>
+              </li>
+            </ul>
+            <p class="mt-6 text-sm text-tinta-tenue">Te llevará unos dos minutos.</p>
+            <button type="button" class="boton-primario mt-8" (click)="paso.set(1)">
+              Empezar
+              <lucide-icon [img]="iconos.ArrowRight" [size]="18" />
+            </button>
+          </section>
+        }
+
+        @case (1) {
+          <section class="animate-aparecer">
+            <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Sube tu CV</h1>
+            <p class="mt-2 text-tinta-suave">
+              En PDF o Word. Si tienes el perfil de LinkedIn descargado en PDF, también sirve.
+            </p>
+
+            @if (analizando()) {
+              <div class="tarjeta mt-8 py-8" aria-live="polite">
+                <ol class="space-y-4">
+                  @for (f of fases; track f; let i = $index) {
+                    <li
+                      class="flex items-center gap-3 text-[15px] transition-colors duration-300"
+                      [class]="i <= fase() ? 'text-tinta' : 'text-tinta-tenue'"
+                    >
+                      <span class="grid size-6 place-items-center">
+                        @if (i < fase()) {
+                          <lucide-icon [img]="iconos.Check" [size]="18" class="text-ok" />
+                        } @else if (i === fase()) {
+                          <lucide-icon
+                            [img]="iconos.LoaderCircle"
+                            [size]="18"
+                            class="animate-spin text-acento"
+                          />
+                        } @else {
+                          <span class="size-1.5 rounded-full bg-borde"></span>
+                        }
+                      </span>
+                      {{ f }}
+                    </li>
+                  }
+                </ol>
+              </div>
+            } @else {
+              @if (archivo(); as a) {
+                <div class="tarjeta mt-8 flex items-center gap-4">
+                  <span
+                    class="grid size-11 place-items-center rounded-xl bg-acento-suave text-acento"
+                  >
+                    <lucide-icon [img]="iconos.FileText" [size]="20" />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{{ a.name }}</p>
+                    <p class="text-sm text-tinta-tenue">{{ tamano(a.size) }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="archivo.set(null)"
+                    class="grid size-9 place-items-center rounded-lg text-tinta-tenue hover:bg-fondo hover:text-tinta"
+                    aria-label="Quitar el archivo"
+                  >
+                    <lucide-icon [img]="iconos.X" [size]="18" />
+                  </button>
+                </div>
+              } @else {
+                <label
+                  class="mt-8 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition"
+                  [class]="
+                    arrastrando()
+                      ? 'border-acento bg-acento-suave'
+                      : 'border-borde bg-superficie hover:border-tinta/25'
+                  "
+                  (dragover)="$event.preventDefault(); arrastrando.set(true)"
+                  (dragleave)="arrastrando.set(false)"
+                  (drop)="soltar($event)"
+                >
+                  <span class="grid size-12 place-items-center rounded-2xl bg-fondo text-tinta">
+                    <lucide-icon [img]="iconos.FileUp" [size]="22" />
+                  </span>
+                  <span class="mt-4 font-medium"
+                    >Arrastra tu CV aquí o <span class="enlace">elígelo</span></span
+                  >
+                  <span class="mt-1 text-sm text-tinta-tenue">PDF o Word · máx. 5 MB</span>
+                  <input
+                    type="file"
+                    class="sr-only"
+                    accept=".pdf,.docx"
+                    (change)="elegir($event)"
+                  />
+                </label>
+              }
+            }
+            @if (errorArchivo()) {
+              <p class="error-campo" role="alert">{{ errorArchivo() }}</p>
+            }
+
+            <p class="mt-5 flex items-start gap-2.5 text-[13px] leading-relaxed text-tinta-tenue">
+              <lucide-icon [img]="iconos.LockKeyhole" [size]="15" class="mt-0.5 shrink-0" />
+              Borramos el archivo nada más analizarlo y quitamos tus datos de contacto antes de usar
+              la IA. Solo guardamos tus competencias y tu experiencia.
+            </p>
+
+            <div class="mt-10 flex items-center justify-between">
+              <button
+                type="button"
+                class="boton-texto"
+                [disabled]="analizando()"
+                (click)="paso.set(0)"
+              >
+                Atrás
+              </button>
+              <button
+                type="button"
+                class="boton-primario"
+                [disabled]="!archivo() || analizando()"
+                (click)="analizar()"
+              >
+                Analizar mi CV
+                <lucide-icon [img]="iconos.ArrowRight" [size]="18" />
+              </button>
+            </div>
+          </section>
+        }
+
+        @case (2) {
+          <section class="animate-aparecer">
+            <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Tus competencias</h1>
+            @if (competencias().length) {
+              <p class="mt-2 text-tinta-suave">
+                Hemos encontrado <strong class="text-tinta">{{ competencias().length }}</strong>
+                en tu CV. Quita las que no te representen; luego podrás demostrarlas en el
+                Entrenador.
+              </p>
+              <ul class="mt-8 grid gap-2 sm:grid-cols-2">
+                @for (c of competencias(); track c.uri) {
+                  <li
+                    class="group flex items-start gap-3 rounded-xl border border-borde bg-superficie px-4 py-3 transition hover:border-tinta/20"
+                  >
+                    <span class="mt-1 size-2 shrink-0 rounded-full bg-acento"></span>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-[15px] leading-snug font-medium first-letter:uppercase">
+                        {{ c.titulo }}
+                      </p>
+                      @if (c.origen) {
+                        <p class="mt-0.5 truncate text-xs text-tinta-tenue">
+                          En tu CV: «{{ c.origen }}»
+                        </p>
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      (click)="quitar(c)"
+                      class="grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg text-tinta-tenue opacity-60 transition group-hover:opacity-100 hover:bg-error/8 hover:text-error"
+                      [attr.aria-label]="'Quitar ' + c.titulo"
+                    >
+                      <lucide-icon [img]="iconos.X" [size]="15" />
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="mt-2 text-tinta-suave">
+                No hemos encontrado competencias en este CV. Prueba con otro archivo o continúa y
+                complétalo más tarde.
+              </p>
+            }
+            <div class="mt-10 flex items-center justify-between">
+              <button type="button" class="boton-texto" (click)="paso.set(1)">Subir otro CV</button>
+              <button type="button" class="boton-primario" (click)="despues()">
+                Confirmar y entrar
+                <lucide-icon [img]="iconos.ArrowRight" [size]="18" />
+              </button>
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </main>
+</div>
