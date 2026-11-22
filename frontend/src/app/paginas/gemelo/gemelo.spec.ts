@@ -1,9 +1,11 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ApiService, ModoBusqueda } from '../../nucleo/api.service';
+import { GemeloService } from '../../nucleo/gemelo.service';
 import { GemeloPagina } from './gemelo';
 
 describe('GemeloPagina', () => {
@@ -25,7 +27,11 @@ describe('GemeloPagina', () => {
     llamadas.length = 0;
     await TestBed.configureTestingModule({
       imports: [GemeloPagina],
-      providers: [{ provide: ApiService, useValue: apiFalsa }],
+      providers: [
+        provideRouter([]),
+        { provide: ApiService, useValue: apiFalsa },
+        { provide: GemeloService, useValue: { competencias: () => of([]) } },
+      ],
     }).compileComponents();
   });
 
