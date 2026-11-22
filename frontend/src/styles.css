@@ -15,6 +15,7 @@
   --color-fondo: #f7f7f9;
   --color-superficie: #ffffff;
   --color-borde: #e7e7ec;
+  --color-seleccion: #efeff3;
   --color-acento: #5b4ff5;
   --color-acento-suave: #f1efff;
   --color-ok: #12a150;
@@ -80,6 +81,20 @@
 }
 
 @layer components {
+  /* Escala tipográfica */
+  .titulo-pagina {
+    @apply text-3xl leading-tight font-semibold tracking-tight sm:text-[34px];
+  }
+  .subtitulo-pagina {
+    @apply mt-2 max-w-2xl text-base leading-relaxed text-tinta-suave sm:text-[17px];
+  }
+  .titulo-seccion {
+    @apply text-lg leading-snug font-semibold tracking-tight;
+  }
+  .titulo-acceso {
+    @apply text-[32px] leading-[1.15] font-semibold tracking-tight text-balance sm:text-[38px];
+  }
+
   /* Campos de formulario */
   .campo {
     @apply block h-11 w-full rounded-xl border border-borde bg-superficie px-3.5 text-[15px] text-tinta transition outline-none placeholder:text-tinta-tenue hover:border-tinta/25 focus:border-acento focus:ring-4 focus:ring-acento/15 aria-invalid:border-error aria-invalid:focus:ring-error/15;
@@ -116,7 +131,7 @@
 
   /* Compatibilidad con las páginas existentes */
   .tarjeta {
-    @apply rounded-2xl border border-borde bg-superficie p-5 shadow-suave;
+    @apply rounded-2xl border border-borde bg-superficie p-6 shadow-suave;
   }
   .rejilla {
     @apply grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4;

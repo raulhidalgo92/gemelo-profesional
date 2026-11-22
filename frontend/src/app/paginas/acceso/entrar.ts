@@ -12,8 +12,8 @@ import { SesionService, codigoDeError, mensajeDeError } from '../../nucleo/sesio
   imports: [ReactiveFormsModule, RouterLink, LucideAngularModule],
   template: `
     <div class="mb-8">
-      <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Hola de nuevo</h1>
-      <p class="mt-2 text-tinta-suave">Entra para seguir con tu plan.</p>
+      <h1 class="titulo-acceso">¿Tu siguiente paso?</h1>
+      <p class="mt-2 text-tinta-suave">Entra y deja que tu gemelo te ayude a descubrirlo.</p>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="enviar()" novalidate class="space-y-5">

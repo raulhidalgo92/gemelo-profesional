@@ -26,5 +26,10 @@ describe('MarcoApp', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelectorAll('nav a').length).toBe(5);
     expect(el.textContent).toContain('ana@ejemplo.com');
+    // Cerrar sesión queda dentro del menú del usuario
+    expect(el.textContent).not.toContain('Cerrar sesión');
+    (el.querySelector('[aria-haspopup=menu]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Cerrar sesión');
   });
 });

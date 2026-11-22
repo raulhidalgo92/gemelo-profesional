@@ -1,14 +1,12 @@
 <div class="mb-8">
   <p class="mb-3 text-[13px] font-medium tracking-wide text-acento uppercase">Paso 1 de 2</p>
-  <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Crea tu cuenta</h1>
-  <p class="mt-2 text-tinta-suave">
-    Solo lo imprescindible. Lo demás lo sacaremos de tu currículum.
-  </p>
+  <h1 class="titulo-acceso">Crea tu cuenta</h1>
+  <p class="mt-2 text-tinta-suave">Regístrate y crea tu gemelo a partir de tu CV.</p>
 </div>
 
 <form [formGroup]="form" (ngSubmit)="enviar()" novalidate class="space-y-5">
   <div>
-    <label for="nombre" class="etiqueta-campo">¿Cómo te llamamos?</label>
+    <label for="nombre" class="etiqueta-campo">Nombre</label>
     <input
       id="nombre"
       formControlName="nombre"
@@ -18,7 +16,7 @@
       [attr.aria-invalid]="invalido('nombre') || null"
     />
     @if (invalido('nombre')) {
-      <p class="error-campo">Dinos cómo quieres que te llamemos.</p>
+      <p class="error-campo">Escribe tu nombre.</p>
     }
   </div>
 

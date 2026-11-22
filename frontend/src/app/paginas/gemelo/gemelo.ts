@@ -14,7 +14,7 @@ import {
 } from 'rxjs';
 
 import { RouterLink } from '@angular/router';
-import { FileUp, LucideAngularModule } from 'lucide-angular';
+import { FileUp, LucideAngularModule, Search } from 'lucide-angular';
 
 import { ApiService, BusquedaCompetencias, ModoBusqueda } from '../../nucleo/api.service';
 import { CompetenciaGemelo, GemeloService } from '../../nucleo/gemelo.service';
@@ -26,12 +26,11 @@ const TIPOS: Record<string, string> = { skill: 'capacidad', knowledge: 'conocimi
   selector: 'app-gemelo',
   imports: [DecimalPipe, PercentPipe, RouterLink, LucideAngularModule],
   templateUrl: './gemelo.html',
-  styleUrl: './gemelo.scss',
 })
 export class GemeloPagina {
   private readonly api = inject(ApiService);
   protected readonly sesion = inject(SesionService);
-  protected readonly iconoCv = FileUp;
+  protected readonly iconos = { FileUp, Search };
 
   /** undefined: cargando · []: sin CV todavía */
   protected readonly misCompetencias = toSignal(
@@ -51,6 +50,10 @@ export class GemeloPagina {
 
   protected readonly texto = signal('');
   protected readonly modo = signal<ModoBusqueda>('semantico');
+  protected readonly opcionesModo: { valor: ModoBusqueda; texto: string }[] = [
+    { valor: 'semantico', texto: 'Por significado' },
+    { valor: 'texto', texto: 'Por texto' },
+  ];
 
   private readonly consulta = computed(() => ({ q: this.texto().trim(), modo: this.modo() }));
 

@@ -8,10 +8,8 @@ import { ModuloPendiente } from '../../nucleo/modulo-pendiente';
   selector: 'app-entrenador',
   imports: [ModuloPendiente],
   template: `<app-modulo-pendiente
-    icono="🎤"
     titulo="Entrenador"
     descripcion="Entrevista simulada para una oferta concreta, por texto o voz, y estimación del nivel de inglés."
-    iteracion="iteración 3"
     [funcionalidades]="[
       'Preguntas generadas a partir de la oferta y del gemelo',
       'Evaluación de cada respuesta (método STAR) con explicación',

@@ -8,12 +8,10 @@ import { ModuloPendiente } from '../../nucleo/modulo-pendiente';
   selector: 'app-empleo',
   imports: [ModuloPendiente],
   template: `<app-modulo-pendiente
-    icono="🔎"
     titulo="Empleo"
     descripcion="Ofertas reales con el porcentaje de encaje y la explicación de en qué se basa."
-    iteracion="iteración 2"
     [funcionalidades]="[
-      'Buscador de ofertas de EURES e InfoJobs actualizado cada noche',
+      'Buscador de ofertas de fuentes públicas, actualizado cada noche',
       'Porcentaje de encaje con competencias que cumples y que te faltan',
       'Analizar una oferta pegada por el usuario (LinkedIn u otra web)',
     ]"

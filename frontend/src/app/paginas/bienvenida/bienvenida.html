@@ -42,12 +42,10 @@
       @switch (paso()) {
         @case (0) {
           <section class="animate-aparecer">
-            <h1 class="text-[32px] leading-tight font-semibold tracking-tight">
-              Hola, {{ nombre() }}. Vamos a crear tu gemelo.
-            </h1>
+            <h1 class="titulo-acceso">Hola, {{ nombre() }}. Vamos a crear tu gemelo.</h1>
             <p class="mt-3 text-[17px] leading-relaxed text-tinta-suave">
-              Tu gemelo es un modelo de tus competencias que se actualiza con lo que haces aquí. Con
-              él te diremos qué ofertas encajan contigo, qué aprender primero y qué caminos tienes
+              Tu gemelo es una versión digital de tu perfil profesional que aprende contigo. Te
+              mostrará qué ofertas encajan contigo, qué te conviene aprender y qué caminos tienes
               por delante.
             </p>
             <ul class="mt-8 space-y-3">
@@ -68,7 +66,7 @@
                 </div>
               </li>
             </ul>
-            <p class="mt-6 text-sm text-tinta-tenue">Te llevará unos dos minutos.</p>
+            <p class="mt-6 text-sm text-tinta-tenue">En dos minutos tendrás tu gemelo listo.</p>
             <button type="button" class="boton-primario mt-8" (click)="paso.set(1)">
               Empezar
               <lucide-icon [img]="iconos.ArrowRight" [size]="18" />
@@ -78,7 +76,7 @@
 
         @case (1) {
           <section class="animate-aparecer">
-            <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Sube tu CV</h1>
+            <h1 class="titulo-acceso">Sube tu CV</h1>
             <p class="mt-2 text-tinta-suave">
               En PDF o Word. Si tienes el perfil de LinkedIn descargado en PDF, también sirve.
             </p>
@@ -192,7 +190,7 @@
 
         @case (2) {
           <section class="animate-aparecer">
-            <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Tus competencias</h1>
+            <h1 class="titulo-acceso">Tus competencias</h1>
             @if (competencias().length) {
               <p class="mt-2 text-tinta-suave">
                 Hemos encontrado <strong class="text-tinta">{{ competencias().length }}</strong>

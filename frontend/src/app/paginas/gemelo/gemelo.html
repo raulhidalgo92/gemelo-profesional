@@ -1,161 +1,180 @@
-<header class="mb-8">
-  <p class="text-sm text-tinta-tenue">Hola, {{ sesion.usuario()?.nombre }}</p>
-  <h1 class="mt-1 text-3xl font-semibold tracking-tight">Mi gemelo profesional</h1>
-  <p class="mt-2 max-w-2xl text-tinta-suave">
-    Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte o
-    Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
-  </p>
+<header class="mb-10">
+  <div>
+    <p class="text-sm font-medium text-tinta-tenue">Hola, {{ sesion.usuario()?.nombre }}</p>
+    <h1 class="titulo-pagina mt-0.5">Mi gemelo profesional</h1>
+    <p class="subtitulo-pagina">
+      Tus competencias y las evidencias que las respaldan. Cada acción en la aplicación actualiza tu
+      gemelo y recalcula tus recomendaciones.
+    </p>
+  </div>
 </header>
 
-<section class="tarjeta mb-6">
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <h3 class="text-lg">Tus competencias</h3>
-    @if (misCompetencias()?.length) {
-      <span class="etiqueta">{{ misCompetencias()!.length }} declaradas en tu CV</span>
-    }
-  </div>
-  @switch (misCompetencias()?.length) {
-    @case (undefined) {
-      <p class="mt-3 text-tinta-tenue">Cargando…</p>
-    }
-    @case (0) {
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-fondo p-5">
-        <p class="text-tinta-suave">
-          Aún no has subido tu CV. Con él construimos tu gemelo en unos segundos.
-        </p>
-        <a routerLink="/bienvenida" class="boton-primario">
-          <lucide-icon [img]="iconoCv" [size]="18" />
-          Subir mi CV
-        </a>
-      </div>
-    }
-    @default {
-      <ul class="mt-4 flex flex-wrap gap-2">
-        @for (c of misCompetencias(); track c.uri) {
-          <li
-            class="rounded-full border border-borde bg-superficie px-3 py-1.5 text-sm first-letter:uppercase"
-            [title]="c.origen ? 'En tu CV: «' + c.origen + '»' : ''"
-          >
-            {{ c.titulo }}
-          </li>
-        }
-      </ul>
-    }
-  }
-</section>
-
-<section class="rejilla">
-  <article class="tarjeta">
-    <h3>Estado del sistema</h3>
-    @switch (salud()) {
-      @case (undefined) {
-        <p class="suave">Comprobando…</p>
+<div class="space-y-6">
+  <section class="tarjeta">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="titulo-seccion">Tus competencias</h2>
+      @if (misCompetencias()?.length) {
+        <span class="etiqueta">{{ misCompetencias()!.length }} declaradas en tu CV</span>
       }
-      @case (null) {
-        <p><span class="punto error"></span> API no disponible</p>
+    </div>
+    @switch (misCompetencias()?.length) {
+      @case (undefined) {
+        <p class="mt-4 text-tinta-tenue">Cargando…</p>
+      }
+      @case (0) {
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-fondo p-5">
+          <p class="text-tinta-suave">
+            Aún no has subido tu CV. Con él construimos tu gemelo en unos segundos.
+          </p>
+          <a routerLink="/bienvenida" class="boton-primario">
+            <lucide-icon [img]="iconos.FileUp" [size]="18" />
+            Subir mi CV
+          </a>
+        </div>
       }
       @default {
-        <p>
-          <span class="punto" [class.ok]="salud()!.base_datos"></span>
-          API v{{ salud()!.version }} · base de datos
-          {{ salud()!.base_datos ? 'conectada' : 'sin conexión' }}
-        </p>
-      }
-    }
-  </article>
-
-  <article class="tarjeta">
-    <h3>Datos de mercado cargados</h3>
-    @if (mercado(); as m) {
-      <ul class="cifras">
-        <li>
-          <strong>{{ m.ocupaciones | number }}</strong> ocupaciones ESCO
-        </li>
-        <li>
-          <strong>{{ m.competencias | number }}</strong> competencias ESCO
-        </li>
-        <li>
-          <strong>{{ m.transiciones | number }}</strong> transiciones O*NET
-        </li>
-        <li>
-          <strong>{{ m.ofertas | number }}</strong> ofertas
-        </li>
-      </ul>
-    } @else {
-      <p class="suave">Sin datos todavía. Ejecuta la ingesta de ESCO y O*NET.</p>
-    }
-  </article>
-</section>
-
-<section class="tarjeta buscador">
-  <h3>Vocabulario ESCO</h3>
-  <p class="suave">
-    Todo (CV, ofertas, entrevistas) se traduce a competencias ESCO. Prueba a buscar una:
-  </p>
-
-  <div class="selector" role="radiogroup" aria-label="Tipo de búsqueda">
-    <button
-      type="button"
-      role="radio"
-      [attr.aria-checked]="modo() === 'semantico'"
-      [class.activo]="modo() === 'semantico'"
-      (click)="modo.set('semantico')"
-    >
-      Por significado
-    </button>
-    <button
-      type="button"
-      role="radio"
-      [attr.aria-checked]="modo() === 'texto'"
-      [class.activo]="modo() === 'texto'"
-      (click)="modo.set('texto')"
-    >
-      Por texto
-    </button>
-  </div>
-
-  <input
-    type="search"
-    aria-label="Buscar competencia"
-    placeholder="p. ej. Angular, Excel avanzado, trabajo en equipo…"
-    [value]="texto()"
-    (input)="texto.set($any($event.target).value)"
-  />
-
-  @if (sinIa()) {
-    <p class="aviso">
-      La búsqueda por significado no está disponible; se muestran resultados por texto.
-    </p>
-  }
-
-  @switch (busqueda()) {
-    @case (undefined) {
-      <p class="suave">Buscando…</p>
-    }
-    @case (null) {}
-    @default {
-      @if (busqueda()!.resultados.length === 0) {
-        <p class="suave">
-          Sin resultados.
-          @if (modo() === 'texto') {
-            Prueba la búsqueda por significado.
-          }
-        </p>
-      } @else {
-        <ul class="resultados">
-          @for (c of busqueda()!.resultados; track c.uri) {
-            <li>
-              <span>{{ c.titulo }}</span>
-              <span class="meta">
-                <span class="etiqueta">{{ tipo(c.tipo) }}</span>
-                <span class="similitud" title="Similitud con la búsqueda">{{
-                  c.similitud | percent
-                }}</span>
-              </span>
+        <ul class="mt-5 flex flex-wrap gap-2">
+          @for (c of misCompetencias(); track c.uri) {
+            <li
+              class="rounded-full border border-borde bg-superficie px-3 py-1.5 text-sm first-letter:uppercase"
+              [title]="c.origen ? 'En tu CV: «' + c.origen + '»' : ''"
+            >
+              {{ c.titulo }}
             </li>
           }
         </ul>
       }
     }
-  }
-</section>
+  </section>
+
+  <section class="tarjeta">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="titulo-seccion">Datos del mercado</h2>
+      @switch (salud()) {
+        @case (undefined) {
+          <span class="text-sm text-tinta-tenue">Comprobando…</span>
+        }
+        @case (null) {
+          <span class="inline-flex items-center gap-2 text-sm text-error">
+            <span class="punto size-2 rounded-full bg-error"></span> API no disponible
+          </span>
+        }
+        @default {
+          <span class="inline-flex items-center gap-2 text-sm text-tinta-suave">
+            <span
+              class="punto size-2 rounded-full"
+              [class]="salud()!.base_datos ? 'bg-ok' : 'bg-amber-500'"
+            ></span>
+            {{ salud()!.base_datos ? 'Actualizados' : 'Sin conexión' }}
+          </span>
+        }
+      }
+    </div>
+    @if (mercado(); as m) {
+      <dl class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        @for (
+          d of [
+            { n: m.ofertas, t: 'ofertas' },
+            { n: m.competencias, t: 'competencias ESCO' },
+            { n: m.ocupaciones, t: 'ocupaciones ESCO' },
+            { n: m.transiciones, t: 'transiciones' },
+          ];
+          track d.t
+        ) {
+          <div class="rounded-xl bg-fondo px-4 py-4">
+            <dd class="text-2xl font-semibold tracking-tight tabular-nums">{{ d.n | number }}</dd>
+            <dt class="mt-1 text-sm text-tinta-suave">{{ d.t }}</dt>
+          </div>
+        }
+      </dl>
+    } @else {
+      <p class="mt-4 text-tinta-suave">Sin datos todavía.</p>
+    }
+  </section>
+
+  <section class="tarjeta">
+    <h2 class="titulo-seccion">Explora el vocabulario ESCO</h2>
+    <p class="mt-1.5 text-tinta-suave">
+      Tu CV, las ofertas y las entrevistas se traducen a estas competencias. Prueba a buscar una.
+    </p>
+
+    <div class="mt-5 flex flex-col gap-3 sm:flex-row">
+      <div class="relative flex-1">
+        <span
+          class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-tinta-tenue"
+        >
+          <lucide-icon [img]="iconos.Search" [size]="18" />
+        </span>
+        <input
+          type="search"
+          class="campo pl-10"
+          aria-label="Buscar competencia"
+          placeholder="Angular, Excel avanzado, trabajo en equipo…"
+          [value]="texto()"
+          (input)="texto.set($any($event.target).value)"
+        />
+      </div>
+      <div
+        class="selector inline-flex h-11 shrink-0 rounded-xl bg-fondo p-1"
+        role="radiogroup"
+        aria-label="Tipo de búsqueda"
+      >
+        @for (o of opcionesModo; track o.valor) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="modo() === o.valor"
+            (click)="modo.set(o.valor)"
+            class="flex-1 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition"
+            [class]="
+              modo() === o.valor
+                ? 'bg-superficie text-tinta shadow-sm'
+                : 'text-tinta-suave hover:text-tinta'
+            "
+          >
+            {{ o.texto }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (sinIa()) {
+      <p class="mt-3 text-sm text-amber-700">
+        La búsqueda por significado no está disponible; se muestran resultados por texto.
+      </p>
+    }
+
+    @switch (busqueda()) {
+      @case (undefined) {
+        <p class="mt-4 text-tinta-suave">Buscando…</p>
+      }
+      @case (null) {}
+      @default {
+        @if (busqueda()!.resultados.length === 0) {
+          <p class="mt-4 text-tinta-suave">
+            Sin resultados.
+            @if (modo() === 'texto') {
+              Prueba la búsqueda por significado.
+            }
+          </p>
+        } @else {
+          <ul class="resultados mt-4 divide-y divide-borde">
+            @for (c of busqueda()!.resultados; track c.uri) {
+              <li class="flex items-center justify-between gap-4 py-3">
+                <span class="min-w-0 first-letter:uppercase">{{ c.titulo }}</span>
+                <span class="flex shrink-0 items-center gap-3">
+                  <span class="etiqueta">{{ tipo(c.tipo) }}</span>
+                  <span
+                    class="w-11 text-right text-sm text-tinta-tenue tabular-nums"
+                    title="Similitud con la búsqueda"
+                    >{{ c.similitud | percent }}</span
+                  >
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </section>
+</div>
