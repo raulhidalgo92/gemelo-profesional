@@ -1,0 +1,102 @@
+<div class="mb-8">
+  <p class="mb-3 text-[13px] font-medium tracking-wide text-acento uppercase">Paso 1 de 2</p>
+  <h1 class="text-[28px] leading-tight font-semibold tracking-tight">Crea tu cuenta</h1>
+  <p class="mt-2 text-tinta-suave">
+    Solo lo imprescindible. Lo demás lo sacaremos de tu currículum.
+  </p>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="enviar()" novalidate class="space-y-5">
+  <div>
+    <label for="nombre" class="etiqueta-campo">¿Cómo te llamamos?</label>
+    <input
+      id="nombre"
+      formControlName="nombre"
+      class="campo"
+      autocomplete="given-name"
+      placeholder="Tu nombre"
+      [attr.aria-invalid]="invalido('nombre') || null"
+    />
+    @if (invalido('nombre')) {
+      <p class="error-campo">Dinos cómo quieres que te llamemos.</p>
+    }
+  </div>
+
+  <div>
+    <label for="email" class="etiqueta-campo">Correo electrónico</label>
+    <input
+      id="email"
+      type="email"
+      formControlName="email"
+      class="campo"
+      autocomplete="email"
+      placeholder="tu@correo.com"
+      [attr.aria-invalid]="invalido('email') || null"
+    />
+    @if (invalido('email')) {
+      <p class="error-campo">Escribe un correo válido.</p>
+    }
+  </div>
+
+  <div>
+    <label for="contrasena" class="etiqueta-campo">Contraseña</label>
+    <div class="relative">
+      <input
+        id="contrasena"
+        [type]="verClave() ? 'text' : 'password'"
+        formControlName="contrasena"
+        class="campo pr-11"
+        autocomplete="new-password"
+        placeholder="Al menos 10 caracteres"
+        [attr.aria-invalid]="invalido('contrasena') || null"
+      />
+      <button
+        type="button"
+        (click)="verClave.set(!verClave())"
+        class="absolute inset-y-0 right-0 grid w-11 place-items-center text-tinta-tenue transition hover:text-tinta"
+        [attr.aria-label]="verClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+      >
+        <lucide-icon [img]="verClave() ? iconos.EyeOff : iconos.Eye" [size]="18" />
+      </button>
+    </div>
+    <app-fortaleza [clave]="form.controls.contrasena.value" />
+    @if (invalido('contrasena')) {
+      <p class="error-campo">Usa al menos 10 caracteres.</p>
+    }
+  </div>
+
+  <label class="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-tinta-suave">
+    <input
+      type="checkbox"
+      formControlName="acepta"
+      class="mt-0.5 size-4.5 shrink-0 cursor-pointer rounded accent-tinta"
+      [attr.aria-invalid]="invalido('acepta') || null"
+    />
+    <span>
+      Acepto que se traten mis datos para crear mi gemelo profesional según la
+      <a routerLink="/privacidad" target="_blank" class="enlace">política de privacidad</a>. Puedo
+      borrar mi cuenta y todos mis datos cuando quiera.
+    </span>
+  </label>
+  @if (invalido('acepta')) {
+    <p class="error-campo -mt-3">Necesitamos tu consentimiento para continuar.</p>
+  }
+
+  @if (error()) {
+    <p class="rounded-xl bg-error/8 px-4 py-3 text-sm text-error" role="alert">{{ error() }}</p>
+  }
+
+  <button type="submit" class="boton-primario w-full" [disabled]="enviando()">
+    @if (enviando()) {
+      <lucide-icon [img]="iconos.LoaderCircle" [size]="18" class="animate-spin" />
+      Creando tu cuenta…
+    } @else {
+      Continuar
+      <lucide-icon [img]="iconos.ArrowRight" [size]="18" />
+    }
+  </button>
+</form>
+
+<p class="mt-8 text-center text-sm text-tinta-suave">
+  ¿Ya tienes cuenta? <a routerLink="/entrar" class="enlace">Inicia sesión</a>
+</p>

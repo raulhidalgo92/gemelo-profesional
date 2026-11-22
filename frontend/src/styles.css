@@ -1,0 +1,152 @@
+/* Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR) */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Tipografía alojada en el propio proyecto: no se hacen peticiones a servicios externos */
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Tinta (texto y superficies oscuras) y acento */
+  --color-tinta: #17171c;
+  --color-tinta-suave: #5d5d6b;
+  --color-tinta-tenue: #8a8a96;
+  --color-fondo: #f7f7f9;
+  --color-superficie: #ffffff;
+  --color-borde: #e7e7ec;
+  --color-acento: #5b4ff5;
+  --color-acento-suave: #f1efff;
+  --color-ok: #12a150;
+  --color-error: #d92d20;
+
+  --radius-xl: 0.875rem;
+  --shadow-suave: 0 1px 2px rgb(23 23 28 / 4%), 0 8px 24px -12px rgb(23 23 28 / 12%);
+
+  --animate-aparecer: aparecer 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-temblar: temblar 0.4s ease-in-out;
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes temblar {
+    0%,
+    100% {
+      transform: none;
+    }
+    20%,
+    60% {
+      transform: translateX(-6px);
+    }
+    40%,
+    80% {
+      transform: translateX(6px);
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-fondo font-sans text-tinta;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  h1 {
+    @apply mt-0 text-2xl font-semibold tracking-tight;
+  }
+  h3 {
+    @apply font-semibold;
+  }
+  /* Tailwind 4 quita el cursor de mano a los botones: se recupera */
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  label:has(> input[type='file']),
+  input[type='checkbox'] {
+    cursor: pointer;
+  }
+  ::selection {
+    @apply bg-acento/20;
+  }
+}
+
+@layer components {
+  /* Campos de formulario */
+  .campo {
+    @apply block h-11 w-full rounded-xl border border-borde bg-superficie px-3.5 text-[15px] text-tinta transition outline-none placeholder:text-tinta-tenue hover:border-tinta/25 focus:border-acento focus:ring-4 focus:ring-acento/15 aria-invalid:border-error aria-invalid:focus:ring-error/15;
+  }
+  .etiqueta-campo {
+    @apply mb-1.5 block text-sm font-medium text-tinta;
+  }
+  .ayuda-campo {
+    @apply mt-1.5 text-[13px] text-tinta-tenue;
+  }
+  .error-campo {
+    @apply mt-1.5 text-[13px] text-error;
+  }
+
+  /* Botones */
+  .boton,
+  .boton-primario,
+  .boton-secundario,
+  .boton-texto {
+    @apply inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition duration-200 select-none focus-visible:ring-4 focus-visible:ring-acento/25 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .boton-primario {
+    @apply bg-tinta text-white shadow-sm hover:-translate-y-px hover:bg-[#2a2a33] hover:shadow-lg hover:shadow-tinta/20 active:translate-y-0 active:scale-[0.99] disabled:hover:translate-y-0 disabled:hover:shadow-sm;
+  }
+  .boton-secundario {
+    @apply border border-borde bg-superficie text-tinta hover:border-tinta/30 hover:bg-fondo;
+  }
+  .boton-texto {
+    @apply h-auto px-0 text-tinta-suave underline-offset-4 hover:text-tinta hover:underline;
+  }
+  .enlace {
+    @apply font-medium text-tinta underline decoration-tinta/20 underline-offset-4 transition hover:decoration-tinta;
+  }
+
+  /* Compatibilidad con las páginas existentes */
+  .tarjeta {
+    @apply rounded-2xl border border-borde bg-superficie p-5 shadow-suave;
+  }
+  .rejilla {
+    @apply grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4;
+  }
+  .suave {
+    @apply text-tinta-suave;
+  }
+  .etiqueta {
+    @apply inline-block rounded-full bg-acento-suave px-2.5 py-0.5 text-xs font-medium text-acento;
+  }
+}
+
+/* Variables que usan los estilos de las páginas existentes */
+:root {
+  --fondo: var(--color-fondo);
+  --superficie: var(--color-superficie);
+  --superficie-oscura: var(--color-tinta);
+  --texto: var(--color-tinta);
+  --texto-suave: var(--color-tinta-suave);
+  --acento: var(--color-acento);
+  --ok: var(--color-ok);
+  --aviso: #d97706;
+  --borde: var(--color-borde);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

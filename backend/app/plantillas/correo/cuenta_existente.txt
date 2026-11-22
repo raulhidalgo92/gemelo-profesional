@@ -1,0 +1,6 @@
+Hola, {{ nombre }}:
+
+Alguien ha intentado registrarse en Gemelo profesional con tu correo, pero ya tienes una cuenta. Si fuiste tú, inicia sesión en:
+{{ url_publica }}/entrar
+
+Si no fuiste tú, puedes ignorar este correo.

@@ -13,18 +13,33 @@ import {
   switchMap,
 } from 'rxjs';
 
+import { RouterLink } from '@angular/router';
+import { FileUp, LucideAngularModule } from 'lucide-angular';
+
 import { ApiService, BusquedaCompetencias, ModoBusqueda } from '../../nucleo/api.service';
+import { CompetenciaGemelo, GemeloService } from '../../nucleo/gemelo.service';
+import { SesionService } from '../../nucleo/sesion.service';
 
 const TIPOS: Record<string, string> = { skill: 'capacidad', knowledge: 'conocimiento' };
 
 @Component({
   selector: 'app-gemelo',
-  imports: [DecimalPipe, PercentPipe],
+  imports: [DecimalPipe, PercentPipe, RouterLink, LucideAngularModule],
   templateUrl: './gemelo.html',
   styleUrl: './gemelo.scss',
 })
 export class GemeloPagina {
   private readonly api = inject(ApiService);
+  protected readonly sesion = inject(SesionService);
+  protected readonly iconoCv = FileUp;
+
+  /** undefined: cargando · []: sin CV todavía */
+  protected readonly misCompetencias = toSignal(
+    inject(GemeloService)
+      .competencias()
+      .pipe(catchError(() => of([] as CompetenciaGemelo[]))),
+    { initialValue: undefined },
+  );
 
   protected readonly salud = toSignal(this.api.salud().pipe(catchError(() => of(null))), {
     initialValue: undefined,

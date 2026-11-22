@@ -27,13 +27,16 @@ from gemelo_core.modelos import Competencia, Ocupacion
 
 _PROMPTS = Path(__file__).parent / "prompts"
 PROMPT_TERMINOS = (_PROMPTS / "extraccion_competencias.md").read_text("utf-8")
+PROMPT_TERMINOS_CV = (_PROMPTS / "extraccion_competencias_cv.md").read_text("utf-8")
 PROMPT_ELECCION = (_PROMPTS / "eleccion_competencias.md").read_text("utf-8")
 PROMPT_PUESTO = (_PROMPTS / "puesto_oferta.md").read_text("utf-8")
 PROMPT_OCUPACION = (_PROMPTS / "eleccion_ocupacion.md").read_text("utf-8")
-VERSION_PROMPTS = "2"
+VERSION_PROMPTS = "3"
 
 MAX_CARACTERES = 4000
+MAX_CARACTERES_CV = 12000
 MAX_TERMINOS = 20
+MAX_TERMINOS_CV = 30
 K_CANDIDATAS = 5
 SIMILITUD_MINIMA = 0.55  # por debajo, la candidata no tiene relación y no se envía
 
@@ -89,15 +92,22 @@ def _pedir_json[T: BaseModel](
     raise AssertionError("inalcanzable")
 
 
-def proponer_terminos(ia: ClienteIA, texto: str, modelo: str | None = None) -> list[str]:
-    """Paso 1: el modelo de lenguaje propone las competencias del texto."""
+def proponer_terminos(
+    ia: ClienteIA, texto: str, modelo: str | None = None, cv: bool = False
+) -> list[str]:
+    """Paso 1: el modelo de lenguaje propone las competencias de una oferta o de un CV."""
+    prompt, etiqueta, maximo_texto, maximo = (
+        (PROMPT_TERMINOS_CV, "Currículum", MAX_CARACTERES_CV, MAX_TERMINOS_CV)
+        if cv
+        else (PROMPT_TERMINOS, "Oferta", MAX_CARACTERES, MAX_TERMINOS)
+    )
     mensajes = [
-        {"role": "system", "content": PROMPT_TERMINOS},
-        {"role": "user", "content": f"Oferta:\n{texto[:MAX_CARACTERES]}"},
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": f"{etiqueta}:\n{texto[:maximo_texto]}"},
     ]
     terminos = _pedir_json(ia, mensajes, RespuestaTerminos, modelo).competencias
     unicos = dict.fromkeys(t.strip() for t in terminos if t and t.strip())
-    return list(unicos)[:MAX_TERMINOS]
+    return list(unicos)[:maximo]
 
 
 def candidatas(s: Session, modelo, vector: list[float], k: int = K_CANDIDATAS) -> list[Candidata]:
@@ -113,7 +123,7 @@ def candidatas(s: Session, modelo, vector: list[float], k: int = K_CANDIDATAS) -
 
 
 def texto_eleccion(contexto: str, terminos: list[str], opciones: list[list[Candidata]]) -> str:
-    lineas = [f"Oferta: {contexto}", "", "Términos y candidatas:"]
+    lineas = [f"Contexto: {contexto}", "", "Términos y candidatas:"]
     for i, (termino, cands) in enumerate(zip(terminos, opciones, strict=True), start=1):
         lineas.append(f"{i}. «{termino}»")
         lineas += [f"   {j}) {c.titulo}" for j, c in enumerate(cands, start=1)]

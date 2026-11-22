@@ -1,22 +1,30 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { App } from './app';
+import { MarcoApp } from './diseno/marco-app';
+import { SesionService } from './nucleo/sesion.service';
 
-describe('App', () => {
+describe('MarcoApp', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
-      providers: [provideRouter([])],
+      imports: [MarcoApp],
+      providers: [provideRouter([]), provideHttpClient()],
     }).compileComponents();
+    TestBed.inject(SesionService).usuario.set({
+      nombre: 'Ana',
+      email: 'ana@ejemplo.com',
+      bienvenida_pendiente: false,
+    });
   });
 
-  it('muestra los cinco apartados del menú', () => {
-    const fixture = TestBed.createComponent(App);
+  it('muestra los cinco apartados del menú y el usuario', () => {
+    const fixture = TestBed.createComponent(MarcoApp);
     fixture.detectChanges();
-    const enlaces = (fixture.nativeElement as HTMLElement).querySelectorAll('nav a');
-    expect(enlaces.length).toBe(5);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('nav a').length).toBe(5);
+    expect(el.textContent).toContain('ana@ejemplo.com');
   });
 });
