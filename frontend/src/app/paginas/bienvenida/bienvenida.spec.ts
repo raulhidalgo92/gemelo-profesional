@@ -65,10 +65,36 @@ describe('BienvenidaPagina', () => {
     pagina.archivo.set(new File(['%PDF'], 'cv.pdf', { type: 'application/pdf' }));
     pagina.analizar();
 
-    const peticion = TestBed.inject(HttpTestingController).expectOne('/api/gemelo/cv');
-    expect(peticion.request.body instanceof FormData).toBe(true);
-    peticion.flush([
-      { uri: 'u1', titulo: 'contabilidad', tipo: null, origen: 'Contabilidad', demostrada: false },
+    const http = TestBed.inject(HttpTestingController);
+    const analisis = http.expectOne('/api/gemelo/cv/analizar');
+    expect(analisis.request.body instanceof FormData).toBe(true);
+    const perfil = { resumen: null, experiencias: [], formacion: [], nivel_ingles: null };
+    const detectada = {
+      uri: 'u1',
+      titulo: 'contabilidad',
+      alcance: null,
+      termino: 'Contabilidad',
+      similitud: 0.8,
+    };
+    analisis.flush({
+      perfil,
+      competencias: [{ ...detectada, nueva: true }],
+      ya_no: [],
+      trayectoria_cambia: true,
+    });
+
+    // El primer CV se aplica entero, sin revisión intermedia
+    const aplicar = http.expectOne('/api/gemelo/cv/aplicar');
+    expect(aplicar.request.body.competencias).toHaveLength(1);
+    aplicar.flush([
+      {
+        uri: 'u1',
+        titulo: 'contabilidad',
+        tipo: null,
+        origen: 'Contabilidad',
+        anadida: false,
+        demostrada: false,
+      },
     ]);
     fixture.detectChanges();
 

@@ -22,6 +22,8 @@ export interface Competencia {
   uri: string;
   titulo: string;
   tipo: string | null;
+  /** Nivel de reutilización ESCO */
+  alcance: string | null;
   similitud: number;
 }
 

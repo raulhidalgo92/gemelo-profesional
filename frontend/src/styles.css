@@ -24,7 +24,9 @@
   --radius-xl: 0.875rem;
   --shadow-suave: 0 1px 2px rgb(23 23 28 / 4%), 0 8px 24px -12px rgb(23 23 28 / 12%);
 
-  --animate-aparecer: aparecer 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /* «backwards»: al terminar no deja ningún transform, que convertiría el contenedor en
+     referencia de los elementos «position: fixed» (avisos) */
+  --animate-aparecer: aparecer 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
   --animate-temblar: temblar 0.4s ease-in-out;
 
   @keyframes aparecer {
@@ -55,6 +57,9 @@
 
 @layer base {
   html {
+    /* Reserva siempre el hueco de la barra de desplazamiento: si no, al crecer la página
+       (o al bloquearla con un panel abierto) el contenido se desplaza unos píxeles */
+    scrollbar-gutter: stable;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -75,6 +80,10 @@
   input[type='checkbox'] {
     cursor: pointer;
   }
+  /* Con un panel modal abierto, la página de detrás no se desplaza */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
   ::selection {
     @apply bg-acento/20;
   }
@@ -87,6 +96,11 @@
   }
   .subtitulo-pagina {
     @apply mt-2 max-w-2xl text-base leading-relaxed text-tinta-suave sm:text-[17px];
+  }
+
+  /* Texto corrido dentro de una tarjeta */
+  .texto-tarjeta {
+    @apply text-[14.5px] leading-[1.65] text-tinta-suave;
   }
   .titulo-seccion {
     @apply text-lg leading-snug font-semibold tracking-tight;
@@ -127,6 +141,95 @@
   }
   .enlace {
     @apply font-medium text-tinta underline decoration-tinta/20 underline-offset-4 transition hover:decoration-tinta;
+  }
+
+  /* Panel lateral (<dialog class="cajon">) a la derecha que entra deslizándose */
+  .cajon {
+    margin: 0 0 0 auto;
+    width: min(500px, 100vw);
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: var(--color-superficie);
+    color: var(--color-tinta);
+    box-shadow: -18px 0 44px -26px rgb(23 23 28 / 50%);
+  }
+  .cajon[open] {
+    animation: cajon-entrar 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .cajon::backdrop {
+    background: rgb(23 23 28 / 35%);
+    animation: cajon-velo 0.2s;
+  }
+  @keyframes cajon-entrar {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes cajon-velo {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cajon[open],
+    .cajon::backdrop {
+      animation: none;
+    }
+  }
+
+  /* Aviso flotante abajo, centrado sobre el contenido (a la derecha del menú en escritorio) */
+  .aviso-flotante {
+    @apply fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-32px)] items-center gap-2.5 rounded-[13px] bg-tinta px-4 py-3 text-sm text-white;
+    box-shadow: 0 14px 30px -14px var(--color-tinta);
+    transform: translateX(-50%);
+  }
+  @media (min-width: 768px) {
+    .aviso-flotante {
+      left: calc(50% + 132px);
+    }
+  }
+  .aviso-flotante lucide-icon {
+    flex: none;
+    color: #c9c4ff;
+  }
+  .aviso-entra {
+    animation: aviso-entra 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .aviso-sale {
+    animation: aviso-entra 0.2s ease-in reverse both;
+  }
+  @keyframes aviso-entra {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 10px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aviso-entra,
+    .aviso-sale {
+      animation: none;
+    }
+  }
+
+  .boton-icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: var(--color-tinta-suave);
+    transition:
+      background 0.15s,
+      color 0.15s,
+      opacity 0.12s;
+  }
+  .boton-icono:hover {
+    background: var(--color-seleccion);
+    color: var(--color-tinta);
   }
 
   /* Compatibilidad con las páginas existentes */

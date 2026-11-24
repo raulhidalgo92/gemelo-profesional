@@ -9,7 +9,9 @@ from app.api.deps import obtener_cliente_ia, obtener_sesion
 from app.main import app
 from gemelo_core.ia import ErrorIA
 
-FILA = SimpleNamespace(uri="u1", titulo="TypeScript", tipo="knowledge", sim=0.4, dist=0.39)
+FILA = SimpleNamespace(
+    uri="u1", titulo="TypeScript", tipo="knowledge", nivel_reutilizacion=None, sim=0.4, dist=0.39
+)
 
 
 def _cliente(ia) -> tuple[TestClient, MagicMock]:
@@ -35,6 +37,7 @@ def test_busqueda_semantica_por_defecto():
         "uri": "u1",
         "titulo": "TypeScript",
         "tipo": "knowledge",
+        "alcance": None,
         "similitud": 0.61,
     }
     ia.embeddings.assert_called_once()

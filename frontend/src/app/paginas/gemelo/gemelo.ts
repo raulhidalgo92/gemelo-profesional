@@ -1,87 +1,135 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
-import { DecimalPipe, PercentPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  of,
-  startWith,
-  switchMap,
-} from 'rxjs';
-
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { FileUp, LucideAngularModule, Search } from 'lucide-angular';
+import {
+  ArrowRight,
+  Award,
+  BadgeCheck,
+  Briefcase,
+  FileUp,
+  Flag,
+  GraduationCap,
+  LucideAngularModule,
+  MessageCircle,
+  Mic,
+  Mountain,
+  Sparkles,
+} from 'lucide-angular';
+import { catchError, forkJoin, of } from 'rxjs';
 
-import { ApiService, BusquedaCompetencias, ModoBusqueda } from '../../nucleo/api.service';
-import { CompetenciaGemelo, GemeloService } from '../../nucleo/gemelo.service';
+import { GemeloService } from '../../nucleo/gemelo.service';
 import { SesionService } from '../../nucleo/sesion.service';
+import {
+  aniosExperiencia,
+  EstadoGemelo,
+  haceCuanto,
+  IconoLogro,
+  logros,
+  porAlcance,
+  puestoActual,
+  tareas,
+} from './panel';
+import { ActualizarCv, CvAplicado } from './actualizar-cv';
+import { TodasCompetencias } from './todas';
+import { Trayectoria } from './trayectoria';
 
-const TIPOS: Record<string, string> = { skill: 'capacidad', knowledge: 'conocimiento' };
+const ICONOS_LOGRO = {
+  creado: Sparkles,
+  destino: Flag,
+  evidencia: BadgeCheck,
+  entrevista: MessageCircle,
+  cinco: Award,
+  meta: Mountain,
+} satisfies Record<IconoLogro, unknown>;
 
+/** Panel «Mi gemelo»: punto de encuentro de la aplicación. */
 @Component({
   selector: 'app-gemelo',
-  imports: [DecimalPipe, PercentPipe, RouterLink, LucideAngularModule],
+  imports: [
+    ActualizarCv,
+    LucideAngularModule,
+    NgTemplateOutlet,
+    RouterLink,
+    TodasCompetencias,
+    Trayectoria,
+  ],
   templateUrl: './gemelo.html',
+  styleUrl: './gemelo.css',
 })
 export class GemeloPagina {
-  private readonly api = inject(ApiService);
-  protected readonly sesion = inject(SesionService);
-  protected readonly iconos = { FileUp, Search };
+  private readonly sesion = inject(SesionService);
+  private readonly gemelo = inject(GemeloService);
 
-  /** undefined: cargando · []: sin CV todavía */
-  protected readonly misCompetencias = toSignal(
-    inject(GemeloService)
-      .competencias()
-      .pipe(catchError(() => of([] as CompetenciaGemelo[]))),
-    { initialValue: undefined },
-  );
-
-  protected readonly salud = toSignal(this.api.salud().pipe(catchError(() => of(null))), {
-    initialValue: undefined,
-  });
-  protected readonly mercado = toSignal(
-    this.api.resumenMercado().pipe(catchError(() => of(null))),
-    { initialValue: undefined },
-  );
-
-  protected readonly texto = signal('');
-  protected readonly modo = signal<ModoBusqueda>('semantico');
-  protected readonly opcionesModo: { valor: ModoBusqueda; texto: string }[] = [
-    { valor: 'semantico', texto: 'Por significado' },
-    { valor: 'texto', texto: 'Por texto' },
+  protected readonly iconos = { ArrowRight, FileUp };
+  protected readonly iconosLogro = ICONOS_LOGRO;
+  protected readonly accesos = [
+    { titulo: 'Ofertas para ti', icono: Briefcase },
+    { titulo: 'Formaciones clave', icono: GraduationCap },
+    { titulo: 'Entrevistas por practicar', icono: Mic },
   ];
 
-  private readonly consulta = computed(() => ({ q: this.texto().trim(), modo: this.modo() }));
-
-  /** null = sin consulta; undefined = buscando */
-  protected readonly busqueda = toSignal(
-    toObservable(this.consulta).pipe(
-      debounceTime(300),
-      distinctUntilChanged((a, b) => a.q === b.q && a.modo === b.modo),
-      switchMap(({ q, modo }) =>
-        q.length < 2
-          ? of(null)
-          : this.api.buscarCompetencias(q, modo).pipe(
-              map((r): BusquedaCompetencias | null | undefined => r),
-              catchError(() => of(null)),
-              startWith(undefined),
-            ),
-      ),
+  /** undefined: cargando · null: error */
+  protected readonly datos = toSignal(
+    forkJoin({ resumen: this.gemelo.resumen(), competencias: this.gemelo.competencias() }).pipe(
+      catchError(() => of(null)),
     ),
-    { initialValue: null },
+    { initialValue: undefined },
   );
 
-  /** Aviso cuando se pidió búsqueda por significado y el servidor respondió por texto */
-  protected readonly sinIa = computed(() => {
-    const b = this.busqueda();
-    return !!b && this.modo() === 'semantico' && b.modo === 'texto';
+  private readonly hoy = new Date();
+  protected readonly nombre = computed(() => this.sesion.usuario()?.nombre ?? '');
+  // Editables: «Actualizar CV» y «Ver todas» los cambian sin recargar la página
+  protected readonly perfil = linkedSignal(() => this.datos()?.resumen.perfil ?? null);
+  private readonly actualizadoEn = linkedSignal(() => this.datos()?.resumen.actualizado_en);
+  protected readonly competencias = linkedSignal(() => this.datos()?.competencias ?? []);
+
+  /** Puesto · años de experiencia · inglés */
+  protected readonly datosPerfil = computed(() => {
+    const p = this.perfil();
+    if (!p) return [];
+    const anios = aniosExperiencia(p.experiencias, this.hoy.getFullYear());
+    return [
+      puestoActual(p.experiencias)?.puesto,
+      anios ? `${anios} ${anios === 1 ? 'año' : 'años'} de experiencia` : undefined,
+      p.nivel_ingles ? `Inglés ${p.nivel_ingles}` : undefined,
+    ].filter((d): d is string => !!d);
   });
 
-  protected tipo(t: string | null): string {
-    return (t && TIPOS[t]) ?? 'competencia';
+  protected readonly actualizado = computed(() => {
+    const fecha = this.actualizadoEn();
+    return fecha ? haceCuanto(new Date(fecha), this.hoy) : undefined;
+  });
+
+  protected readonly columnas = computed(() => porAlcance(this.competencias()));
+  protected readonly demostradas = computed(
+    () => this.competencias().filter((c) => c.demostrada).length,
+  );
+
+  private readonly estado = computed<EstadoGemelo>(() => ({
+    // El gemelo está creado cuando hay un CV analizado, que siempre deja su trayectoria
+    // (las competencias solas pueden venir de añadirlas a mano o de un CV antiguo)
+    conCv: !!this.perfil(),
+    conDestino: false, // el destino llega en la siguiente fase
+    demostradas: this.demostradas(),
+    entrevistas: 0,
+  }));
+  protected readonly tareas = computed(() => tareas(this.estado()));
+  protected readonly hechas = computed(() => this.tareas().filter((t) => t.hecha).length);
+  protected readonly siguiente = computed(() => this.tareas().find((t) => !t.hecha));
+  protected readonly logros = computed(() => logros(this.estado()));
+  protected readonly conseguidos = computed(() => this.logros().filter((l) => l.conseguido));
+
+  protected alAplicarCv(cv: CvAplicado): void {
+    this.perfil.set(cv.perfil);
+    this.competencias.set(cv.competencias);
+    this.actualizadoEn.set(new Date().toISOString());
+  }
+
+  /** Marcas de la barra: una por competencia o, si son muchas, una barra continua */
+  protected marcas(total: number): number[] {
+    return Array.from({ length: total <= 12 ? total : 0 }, (_, i) => i);
   }
 }

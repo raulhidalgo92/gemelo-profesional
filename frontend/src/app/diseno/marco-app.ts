@@ -50,7 +50,7 @@ import { MenuUsuario } from './menu-usuario';
         <app-menu-usuario class="mt-auto hidden border-t border-borde pt-3 md:block" />
       </aside>
       <main class="min-w-0 px-5 py-8 sm:px-10 sm:py-12 lg:px-14">
-        <div class="mx-auto max-w-5xl animate-aparecer">
+        <div class="mx-auto max-w-7xl animate-aparecer">
           <router-outlet />
         </div>
       </main>
