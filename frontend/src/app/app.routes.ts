@@ -26,6 +26,17 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/acceso/registro').then((m) => m.RegistroPagina),
       },
       {
+        path: 'recuperar',
+        title: 'Recuperar la contraseña · Gemelo profesional',
+        loadComponent: () => import('./paginas/acceso/recuperar').then((m) => m.RecuperarPagina),
+      },
+      {
+        path: 'recuperar/codigo',
+        title: 'Revisa tu correo · Gemelo profesional',
+        loadComponent: () =>
+          import('./paginas/acceso/recuperar-codigo').then((m) => m.RecuperarCodigoPagina),
+      },
+      {
         path: 'registro/codigo',
         title: 'Revisa tu correo · Gemelo profesional',
         loadComponent: () =>
@@ -42,6 +53,19 @@ export const routes: Routes = [
         title: 'Activando tu cuenta · Gemelo profesional',
         loadComponent: () =>
           import('./paginas/acceso/verificar-enlace').then((m) => m.VerificarEnlacePagina),
+      },
+    ],
+  },
+  // Enlace del correo de recuperación: funciona también con una sesión abierta
+  {
+    path: 'restablecer',
+    component: MarcoAcceso,
+    children: [
+      {
+        path: '',
+        title: 'Nueva contraseña · Gemelo profesional',
+        loadComponent: () =>
+          import('./paginas/acceso/restablecer').then((m) => m.RestablecerPagina),
       },
     ],
   },

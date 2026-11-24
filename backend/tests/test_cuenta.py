@@ -251,3 +251,73 @@ def test_descargar_mis_datos(cliente, correos, bd):
     # Nunca salen los secretos
     assert "hash" not in r.text
     assert TestClient(app).get("/api/cuenta/exportar").status_code == 401
+
+
+def test_recuperar_no_revela_si_la_cuenta_existe(cliente, correos):
+    r = cliente.post("/api/cuenta/recuperar", json={"email": "nadie@ejemplo.com"})
+    assert r.status_code == 202
+    assert correos == []
+    # Una cuenta sin activar tampoco recibe nada (su camino es la activación)
+    registrar(cliente, correos)
+    enviados = len(correos)
+    r2 = cliente.post("/api/cuenta/recuperar", json={"email": DATOS["email"]})
+    assert (r2.status_code, r2.json()) == (202, r.json())
+    assert len(correos) == enviados
+
+
+def test_recuperar_con_codigo_cambia_la_contrasena_y_entra(cliente, correos):
+    otro = activa(cliente, correos)
+    anonimo = TestClient(app, headers=CSRF)
+    anonimo.post("/api/cuenta/recuperar", json={"email": DATOS["email"]})
+    msg = correos[-1]
+    assert "cambiar tu contraseña" in msg["Subject"]
+    # Pedirlo otra vez enseguida no envía otro correo
+    anonimo.post("/api/cuenta/recuperar", json={"email": DATOS["email"]})
+    assert correos[-1] is msg
+
+    nueva = {"email": DATOS["email"], "contrasena": "otra-clave-larga"}
+    r = anonimo.post("/api/cuenta/restablecer", json={**nueva, "codigo": "000000"})
+    assert (r.status_code, r.json()["detail"]) == (400, "codigo_incorrecto")
+    r = anonimo.post("/api/cuenta/restablecer", json={**nueva, "codigo": codigo_de(msg)})
+    assert r.status_code == 200 and r.json()["email"] == "ana@ejemplo.com"
+    # Entra directamente; las demás sesiones se cierran
+    assert anonimo.get("/api/cuenta/yo").status_code == 200
+    assert otro.get("/api/cuenta/yo").status_code == 401
+    assert cliente.get("/api/cuenta/yo").status_code == 401
+    entrar = {"email": DATOS["email"], "contrasena": "otra-clave-larga"}
+    assert TestClient(app, headers=CSRF).post("/api/cuenta/entrar", json=entrar).status_code == 200
+    # El código ya no sirve una segunda vez
+    r = anonimo.post("/api/cuenta/restablecer", json={**nueva, "codigo": codigo_de(msg)})
+    assert r.status_code == 400
+
+
+def test_recuperar_con_enlace_y_sin_mezclar_enlaces(cliente, correos):
+    msg_activacion = registrar(cliente, correos)
+    # Un enlace de activación no sirve para cambiar la contraseña
+    nueva = {"contrasena": "otra-clave-larga", "token": token_de(msg_activacion)}
+    r = cliente.post("/api/cuenta/restablecer", json=nueva)
+    assert (r.status_code, r.json()["detail"]) == (400, "enlace_no_valido")
+    cliente.post("/api/cuenta/verificar-enlace", json={"token": token_de(msg_activacion)})
+
+    cliente.post("/api/cuenta/recuperar", json={"email": DATOS["email"]})
+    token = token_de(correos[-1])
+    assert "/restablecer?token=" in correos[-1].get_body(("plain",)).get_content()
+    # …ni un enlace de recuperación para activar
+    r = cliente.post("/api/cuenta/verificar-enlace", json={"token": token})
+    assert r.json()["detail"] == "enlace_no_valido"
+    r = cliente.post(
+        "/api/cuenta/restablecer", json={"contrasena": "otra-clave-larga", "token": token}
+    )
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "datos",
+    [
+        {"contrasena": "otra-clave-larga"},
+        {"contrasena": "otra-clave-larga", "email": "ana@ejemplo.com"},
+        {"contrasena": "corta", "email": "ana@ejemplo.com", "codigo": "123456"},
+    ],
+)
+def test_restablecer_datos_no_validos(cliente, datos):
+    assert cliente.post("/api/cuenta/restablecer", json=datos).status_code == 422

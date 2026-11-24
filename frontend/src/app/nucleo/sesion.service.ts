@@ -86,6 +86,23 @@ export class SesionService {
       .pipe(tap((u) => this.usuario.set(u)));
   }
 
+  /** Contraseña olvidada: la respuesta es la misma exista o no la cuenta. */
+  recuperar(email: string): Observable<void> {
+    return this.http.post(`${BASE}/recuperar`, { email }).pipe(map(() => undefined));
+  }
+
+  /** Nueva contraseña con el código (y el correo) o con el enlace; después se entra. */
+  restablecer(datos: {
+    contrasena: string;
+    email?: string;
+    codigo?: string;
+    token?: string;
+  }): Observable<Usuario> {
+    return this.http
+      .post<Usuario>(`${BASE}/restablecer`, datos)
+      .pipe(tap((u) => this.usuario.set(u)));
+  }
+
   salir(): Observable<void> {
     return this.http.post<void>(`${BASE}/salir`, {}).pipe(tap(() => this.usuario.set(null)));
   }

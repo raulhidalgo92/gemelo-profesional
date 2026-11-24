@@ -1,7 +1,7 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, linkedSignal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import {
@@ -9,6 +9,7 @@ import {
   Award,
   BadgeCheck,
   Briefcase,
+  Check,
   FileUp,
   Flag,
   GraduationCap,
@@ -65,7 +66,7 @@ export class GemeloPagina {
   private readonly sesion = inject(SesionService);
   private readonly gemelo = inject(GemeloService);
 
-  protected readonly iconos = { ArrowRight, FileUp };
+  protected readonly iconos = { ArrowRight, Check, FileUp };
   protected readonly iconosLogro = ICONOS_LOGRO;
   protected readonly accesos = [
     { titulo: 'Ofertas para ti', icono: Briefcase },
@@ -80,6 +81,14 @@ export class GemeloPagina {
     ),
     { initialValue: undefined },
   );
+
+  /** Aviso que deja otra pantalla al traer aquí (por ejemplo, «Contraseña cambiada») */
+  protected readonly aviso = signal<string>(history.state?.aviso ?? '');
+
+  constructor() {
+    const reloj = setTimeout(() => this.aviso.set(''), 3500);
+    inject(DestroyRef).onDestroy(() => clearTimeout(reloj));
+  }
 
   private readonly hoy = new Date();
   protected readonly nombre = computed(() => this.sesion.usuario()?.nombre ?? '');
