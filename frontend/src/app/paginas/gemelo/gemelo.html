@@ -1,12 +1,8 @@
-<header class="mb-6 flex flex-wrap items-center justify-between gap-5">
+<header class="cabecera-pagina">
   <div class="flex min-w-0 items-center gap-4">
-    <span
-      class="grid size-14 shrink-0 place-items-center rounded-full bg-tinta text-xl font-semibold text-white"
-      aria-hidden="true"
-      >{{ nombre().charAt(0).toUpperCase() }}</span
-    >
+    <app-avatar [nombre]="nombre()" [avatar]="avatar()" [tamano]="56" />
     <div class="min-w-0">
-      <h1 class="text-[28px] leading-tight sm:text-[30px]">Hola, {{ nombre() }}</h1>
+      <h1 class="titulo-pagina">Hola, {{ nombre() }}</h1>
       @if (datosPerfil().length) {
         <p class="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[14.5px] text-tinta-suave">
           @for (d of datosPerfil(); track d) {

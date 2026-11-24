@@ -1,0 +1,76 @@
+<!-- Ficha de perfil: avatar, nombre y correo, con sus acciones a la derecha -->
+<div class="perfil">
+  <button
+    type="button"
+    class="boton-avatar"
+    aria-label="Cambiar avatar"
+    [attr.aria-expanded]="eligiendo()"
+    (click)="eligiendo.set(!eligiendo())"
+  >
+    <app-avatar [nombre]="nombre()" [avatar]="avatar()" [tamano]="64" />
+    <span class="lapiz">
+      <lucide-icon [img]="iconos.Pencil" [size]="12" [strokeWidth]="2.2" />
+    </span>
+  </button>
+  <div class="min-w-0 flex-1">
+    <!-- El nombre se edita en su sitio: el campo ocupa exactamente lo mismo -->
+    @if (editandoNombre()) {
+      <input
+        #campoNombre
+        class="nombre campo-nombre"
+        aria-label="Tu nombre"
+        maxlength="80"
+        autocomplete="given-name"
+        [value]="nombreNuevo()"
+        [attr.aria-invalid]="!!errorNombre()"
+        (input)="nombreNuevo.set($any($event.target).value); errorNombre.set('')"
+        (keydown.enter)="guardarNombre()"
+        (keydown.escape)="cancelarNombre()"
+      />
+    } @else {
+      <b class="nombre truncate">{{ nombre() }}</b>
+    }
+    @if (errorNombre()) {
+      <span class="linea-perfil text-error" role="alert">{{ errorNombre() }}</span>
+    } @else {
+      <span class="linea-perfil gap-1.5">
+        <span class="truncate text-tinta-suave">{{ email() }}</span>
+        @if (verificado()) {
+          <span
+            class="flex text-ok"
+            role="img"
+            aria-label="Correo verificado"
+            title="Correo verificado"
+          >
+            <lucide-icon [img]="iconos.BadgeCheck" [size]="16" />
+          </span>
+        }
+      </span>
+    }
+  </div>
+  <div class="acciones-perfil">
+    @if (editandoNombre()) {
+      <button type="button" class="boton-fila" (click)="cancelarNombre()">Cancelar</button>
+      <button
+        type="button"
+        class="boton-fila oscuro"
+        [disabled]="!puedeGuardarNombre()"
+        (click)="guardarNombre()"
+      >
+        Guardar
+      </button>
+    } @else {
+      <button type="button" class="boton-fila" (click)="editarNombre()">Editar nombre</button>
+    }
+  </div>
+  @if (eligiendo()) {
+    <app-paleta-avatar
+      class="paleta"
+      animate.enter="paleta-entra"
+      animate.leave="paleta-sale"
+      [nombre]="nombre()"
+      [avatar]="avatar()"
+      (elegido)="elegirAvatar($event)"
+    />
+  }
+</div>

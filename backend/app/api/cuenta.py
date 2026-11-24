@@ -1,14 +1,17 @@
 # Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 # SPDX-License-Identifier: Apache-2.0
-"""Registro, activación, inicio y cierre de sesión, y baja de la cuenta (RGPD)."""
+"""Registro, activación, sesiones y gestión de la cuenta: nombre, contraseña,
+descarga de los datos y baja (RGPD)."""
 
+import json
+from datetime import datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Cookie, HTTPException, Request, Response, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
 from app.api.deps import COOKIE_SESION, SesionDB, UsuarioActual
-from app.servicios import correo, cuentas, seguridad
+from app.servicios import correo, cuentas, exportacion, seguridad
 from app.servicios.cuentas import ErrorCuenta
 from gemelo_core.config import ajustes
 from gemelo_core.modelos import Usuario
@@ -18,6 +21,8 @@ router = APIRouter()
 # Límites por IP (en memoria; suficientes para un único proceso)
 limite_registro = seguridad.Limitador(maximo=10, segundos=3600)
 limite_entrada = seguridad.Limitador(maximo=10, segundos=900)
+
+TokenSesion = Annotated[str | None, Cookie(alias=COOKIE_SESION)]
 
 
 class RegistroEntrada(BaseModel):
@@ -49,14 +54,50 @@ class BajaEntrada(BaseModel):
     contrasena: str = Field(max_length=128)
 
 
+# Avatares de la colección de la app (los dibuja el frontend). Nunca se guardan fotos:
+# no hacen falta para nada y serían un dato personal más (minimización, RGPD)
+Avatar = Literal["gemelo", "lila", "montana", "sol", "ola", "luna", "rombo", "brote"]
+
+
 class UsuarioSalida(BaseModel):
     nombre: str
     email: str
+    avatar: str | None
     bienvenida_pendiente: bool
 
     @classmethod
     def de(cls, u: Usuario) -> "UsuarioSalida":
-        return cls(nombre=u.nombre, email=u.email, bienvenida_pendiente=u.bienvenida_en is None)
+        return cls(
+            nombre=u.nombre,
+            email=u.email,
+            avatar=u.avatar,
+            bienvenida_pendiente=u.bienvenida_en is None,
+        )
+
+
+class CuentaSalida(BaseModel):
+    nombre: str
+    email: str
+    verificada_en: datetime | None
+    consentimiento_en: datetime | None
+    consentimiento_version: str | None
+    # Sesiones abiertas en otros dispositivos
+    otras_sesiones: int
+
+
+class PerfilEntrada(BaseModel):
+    """Cambios del perfil; solo se tocan los campos que llegan."""
+
+    nombre: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)] | None
+    ) = None
+    # null: volver a la inicial
+    avatar: Avatar | None = None
+
+
+class ContrasenaEntrada(BaseModel):
+    actual: str = Field(max_length=128)
+    nueva: str = Field(min_length=10, max_length=128)
 
 
 class Aviso(BaseModel):
@@ -180,7 +221,7 @@ def entrar(
 def salir(
     s: SesionDB,
     respuesta: Response,
-    token: Annotated[str | None, Cookie(alias=COOKIE_SESION)] = None,
+    token: TokenSesion = None,
 ) -> None:
     if token:
         cuentas.cerrar_sesion(s, token)
@@ -200,11 +241,71 @@ def terminar_bienvenida(usuario: UsuarioActual, s: SesionDB) -> None:
     s.commit()
 
 
+@router.get("")
+def detalle(usuario: UsuarioActual, s: SesionDB, token: TokenSesion = None) -> CuentaSalida:
+    return CuentaSalida(
+        nombre=usuario.nombre,
+        email=usuario.email,
+        verificada_en=usuario.verificado_en,
+        consentimiento_en=usuario.consentimiento_en,
+        consentimiento_version=usuario.consentimiento_version,
+        otras_sesiones=cuentas.otras_sesiones(s, usuario, token),
+    )
+
+
+@router.patch("")
+def cambiar_perfil(datos: PerfilEntrada, usuario: UsuarioActual, s: SesionDB) -> UsuarioSalida:
+    """Nombre y avatar. El correo no se puede cambiar: identifica la cuenta."""
+    if datos.nombre is not None:
+        usuario.nombre = datos.nombre
+    if "avatar" in datos.model_fields_set:
+        usuario.avatar = datos.avatar
+    s.commit()
+    return UsuarioSalida.de(usuario)
+
+
+@router.post("/contrasena", status_code=status.HTTP_204_NO_CONTENT)
+def cambiar_contrasena(
+    datos: ContrasenaEntrada,
+    usuario: UsuarioActual,
+    s: SesionDB,
+    request: Request,
+    token: TokenSesion = None,
+) -> None:
+    _limitar(limite_entrada, request)
+    try:
+        cuentas.cambiar_contrasena(s, usuario, datos.actual, datos.nueva, token)
+    except ErrorCuenta as e:
+        raise _error(e) from e
+    s.commit()
+
+
+@router.post("/cerrar-sesiones", status_code=status.HTTP_204_NO_CONTENT)
+def cerrar_sesiones(usuario: UsuarioActual, s: SesionDB, token: TokenSesion = None) -> None:
+    """Cierra la sesión en los demás dispositivos; la actual sigue abierta."""
+    cuentas.cerrar_otras_sesiones(s, usuario, token)
+    s.commit()
+
+
+@router.get("/exportar")
+def exportar(usuario: UsuarioActual, s: SesionDB) -> Response:
+    """Descarga de todos los datos del usuario en JSON (derecho de acceso y portabilidad)."""
+    contenido = json.dumps(exportacion.exportar(s, usuario), ensure_ascii=False, indent=2)
+    return Response(
+        contenido,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": 'attachment; filename="mis-datos-gemelo.json"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 def baja(datos: BajaEntrada, usuario: UsuarioActual, s: SesionDB, respuesta: Response) -> None:
     """Elimina la cuenta y, en cascada, el gemelo y todos sus datos (RGPD)."""
     if not seguridad.verificar_contrasena(datos.contrasena, usuario.hash_contrasena):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "credenciales")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "contrasena_incorrecta")
     s.delete(usuario)
     s.commit()
     respuesta.delete_cookie(COOKIE_SESION, path="/api")

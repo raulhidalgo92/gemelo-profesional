@@ -22,6 +22,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 
 import { GemeloService } from '../../nucleo/gemelo.service';
 import { SesionService } from '../../nucleo/sesion.service';
+import { Avatar } from '../../nucleo/ui/avatar';
 import {
   aniosExperiencia,
   EstadoGemelo,
@@ -50,6 +51,7 @@ const ICONOS_LOGRO = {
   selector: 'app-gemelo',
   imports: [
     ActualizarCv,
+    Avatar,
     LucideAngularModule,
     NgTemplateOutlet,
     RouterLink,
@@ -81,6 +83,7 @@ export class GemeloPagina {
 
   private readonly hoy = new Date();
   protected readonly nombre = computed(() => this.sesion.usuario()?.nombre ?? '');
+  protected readonly avatar = computed(() => this.sesion.usuario()?.avatar);
   // Editables: «Actualizar CV» y «Ver todas» los cambian sin recargar la página
   protected readonly perfil = linkedSignal(() => this.datos()?.resumen.perfil ?? null);
   private readonly actualizadoEn = linkedSignal(() => this.datos()?.resumen.actualizado_en);

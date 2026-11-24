@@ -148,6 +148,9 @@ def test_aplicar_guarda_lo_confirmado(usuario_con_sesion, bd):
     assert gemelo["perfil"]["experiencias"][0]["sector"] == "Banca"
     assert gemelo["perfil"]["nivel_ingles"] == "B2"
     assert gemelo["actualizado_en"]
+    exportado = cliente.get("/api/cuenta/exportar").json()["gemelo"]
+    assert exportado["trayectoria"]["experiencias"][0]["sector"] == "Banca"
+    assert {e["fragmento"] for e in exportado["evidencias"]} == {"Excel", "SQL"}
 
     # Un segundo análisis del mismo CV no trae cambios
     analisis = _analizar(cliente)

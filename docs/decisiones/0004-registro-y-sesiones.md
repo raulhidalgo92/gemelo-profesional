@@ -37,6 +37,17 @@ SMTP genérico con plantillas HTML y texto plano (Jinja2). En desarrollo, **Mail
 
 Tras activar la cuenta, un asistente de tres pasos (bienvenida → subir CV → revisar competencias) guía al usuario. Se puede posponer («Lo haré luego»); `usuario.bienvenida_en` registra que lo ha terminado o pospuesto.
 
+### Mi cuenta (24-11-2026)
+
+Página `/cuenta`, accesible desde el menú del usuario:
+
+- **Avatar**: el usuario elige uno de una colección propia de ilustraciones abstractas (o su inicial, por defecto); se guarda solo su identificador en `usuario.avatar` (`PATCH /api/cuenta`). **No se permite subir una foto**: la aplicación no la necesita y sería un dato personal más, contra el principio de minimización de la propuesta.
+- **Nombre**: editable (`PATCH /api/cuenta`). El **correo no se puede cambiar** porque identifica la cuenta; para usar otro, se crea una cuenta nueva.
+- **Contraseña** (`POST /api/cuenta/contrasena`): pide la actual, exige al menos 10 caracteres y cierra las sesiones de los demás dispositivos. Comparte el límite de intentos por IP con el inicio de sesión.
+- **Sesiones abiertas**: muestra cuántas hay en otros dispositivos y permite cerrarlas (`POST /api/cuenta/cerrar-sesiones`); la actual sigue abierta.
+- **Descargar mis datos** (`GET /api/cuenta/exportar`): un JSON con la cuenta, el consentimiento, la trayectoria, las competencias, las evidencias y las entrevistas (derechos de acceso y portabilidad, arts. 15 y 20 del RGPD). Nunca incluye los resúmenes de la contraseña, de las sesiones ni de los códigos.
+- **Eliminar cuenta** (`DELETE /api/cuenta`): pide la contraseña y borra en cascada todos los datos.
+
 ### Sistema de diseño
 
 - **Tailwind CSS 4** con una paleta propia (tinta, acento índigo, superficies) definida como variables en `styles.css`.
@@ -48,4 +59,4 @@ Tras activar la cuenta, un asistente de tres pasos (bienvenida → subir CV → 
 
 - Los tests de la API de cuenta usan una base de datos PostgreSQL real (`TEST_DATABASE_URL`); la integración continua levanta un servicio de PostgreSQL para ejecutarlos.
 - El limitador de peticiones vive en memoria: es suficiente con un único proceso; con varios, habría que moverlo a la base de datos o a Redis.
-- Pendiente: recuperación de contraseña y la página de ajustes con el borrado de la cuenta (el endpoint `DELETE /api/cuenta` ya existe).
+- Pendiente: recuperación de contraseña.

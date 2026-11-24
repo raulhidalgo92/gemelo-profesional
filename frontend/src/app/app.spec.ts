@@ -16,6 +16,7 @@ describe('MarcoApp', () => {
     TestBed.inject(SesionService).usuario.set({
       nombre: 'Ana',
       email: 'ana@ejemplo.com',
+      avatar: null,
       bienvenida_pendiente: false,
     });
   });

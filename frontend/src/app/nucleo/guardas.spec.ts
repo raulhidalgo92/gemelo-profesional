@@ -14,7 +14,12 @@ import {
 import { bienvenidaHecha, conSesion, fueraDeLaApp, sinSesion } from './guardas';
 import { SesionService, Usuario } from './sesion.service';
 
-const USUARIO: Usuario = { nombre: 'Ana', email: 'ana@ejemplo.com', bienvenida_pendiente: false };
+const USUARIO: Usuario = {
+  nombre: 'Ana',
+  email: 'ana@ejemplo.com',
+  avatar: null,
+  bienvenida_pendiente: false,
+};
 
 describe('guardas de rutas', () => {
   function ejecutar(guarda: CanActivateFn, usuario: Usuario | null) {
