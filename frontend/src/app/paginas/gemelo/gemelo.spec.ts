@@ -20,7 +20,15 @@ const PERFIL = {
 };
 
 function competencia(titulo: string, alcance: string, demostrada = false): CompetenciaGemelo {
-  return { uri: titulo, titulo, tipo: 'skill', alcance, origen: titulo, demostrada };
+  return {
+    uri: titulo,
+    titulo,
+    tipo: 'skill',
+    alcance,
+    origen: titulo,
+    anadida: false,
+    demostrada,
+  };
 }
 
 function crear(resumen: ResumenGemelo, competencias: CompetenciaGemelo[]): HTMLElement {

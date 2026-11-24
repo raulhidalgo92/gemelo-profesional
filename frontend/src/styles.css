@@ -75,6 +75,10 @@
   input[type='checkbox'] {
     cursor: pointer;
   }
+  /* Con un panel modal abierto, la página de detrás no se desplaza */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
   ::selection {
     @apply bg-acento/20;
   }

@@ -22,6 +22,7 @@ El gemelo se construye a partir del currículum del usuario. Hay que convertir u
 - **Qué se sustituye**: la trayectoria se reemplaza por la del CV nuevo. De las competencias, nunca se tocan las demostradas ni las que tengan otra evidencia (por ejemplo, añadidas a mano); las que solo venían del CV anterior se quitan salvo que el usuario pida conservarlas. Las URI que no existen en ESCO se ignoran.
 - **Primer CV**: no hay nada que comparar, así que la bienvenida analiza y aplica todo directamente y después el usuario revisa las competencias.
 - **Coste**: una llamada más al modelo ligero por CV.
+- **Corrección manual** (panel «Ver todas»): el usuario puede añadir competencias del catálogo ESCO que su CV no recogía (`POST /api/gemelo/competencias`, evidencia de origen `manual`), y un CV nuevo no las quita. Al quitar una competencia se ofrece «Deshacer» durante seis segundos y el borrado solo se envía al servidor cuando ya no se puede deshacer, de modo que deshacer conserva su evidencia original.
 
 ## Primera prueba (CV sintético de administrativa contable, 20-11-2026)
 

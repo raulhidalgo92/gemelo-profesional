@@ -95,10 +95,25 @@ function startOfDay(d: Date): number {
 }
 
 export const ALCANCES = [
-  { clave: 'transversal', titulo: 'Para cualquier trabajo', sub: 'Te acompañan siempre' },
-  { clave: 'cross-sector', titulo: 'Entre sectores', sub: 'Útiles en muchos ámbitos' },
-  { clave: 'sector-specific', titulo: 'De tu sector', sub: 'Tu especialidad' },
-  { clave: 'occupation-specific', titulo: 'De tu puesto', sub: 'Muy específicas' },
+  {
+    clave: 'transversal',
+    titulo: 'Para cualquier trabajo',
+    corto: 'Cualquier trabajo',
+    sub: 'Te acompañan siempre',
+  },
+  {
+    clave: 'cross-sector',
+    titulo: 'Entre sectores',
+    corto: 'Entre sectores',
+    sub: 'Útiles en muchos ámbitos',
+  },
+  { clave: 'sector-specific', titulo: 'De tu sector', corto: 'Tu sector', sub: 'Tu especialidad' },
+  {
+    clave: 'occupation-specific',
+    titulo: 'De tu puesto',
+    corto: 'Tu puesto',
+    sub: 'Muy específicas',
+  },
 ];
 
 const MAX_NOMBRES = 4;
@@ -116,9 +131,7 @@ export interface ColumnaAlcance {
 /** Competencias agrupadas por su nivel de reutilización ESCO. */
 export function porAlcance(competencias: CompetenciaGemelo[]): ColumnaAlcance[] {
   return ALCANCES.map((a) => {
-    const grupo = competencias
-      .filter((c) => alcance(c) === a.clave)
-      .sort((x, y) => +y.demostrada - +x.demostrada || x.titulo.localeCompare(y.titulo, 'es'));
+    const grupo = competencias.filter((c) => alcanceDe(c.alcance) === a.clave).sort(ordenar);
     return {
       titulo: a.titulo,
       sub: a.sub,
@@ -131,8 +144,41 @@ export function porAlcance(competencias: CompetenciaGemelo[]): ColumnaAlcance[] 
 }
 
 /** Sin nivel de reutilización conocido, se trata como «entre sectores». */
-function alcance(c: CompetenciaGemelo): string {
-  return ALCANCES.some((a) => a.clave === c.alcance) ? c.alcance! : 'cross-sector';
+export function alcanceDe(alcance: string | null): string {
+  return ALCANCES.some((a) => a.clave === alcance) ? alcance! : 'cross-sector';
+}
+
+/** Demostradas primero y después por orden alfabético */
+function ordenar(x: CompetenciaGemelo, y: CompetenciaGemelo): number {
+  return +y.demostrada - +x.demostrada || x.titulo.localeCompare(y.titulo, 'es');
+}
+
+/** Minúsculas y sin tildes, para buscar «ingles» y encontrar «inglés». */
+export function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/** Filtra por texto (nombre o término del CV) y por alcance; ordenadas. */
+export function buscar(
+  competencias: CompetenciaGemelo[],
+  texto: string,
+  alcance: string | null,
+): CompetenciaGemelo[] {
+  const q = normalizar(texto.trim());
+  return competencias
+    .filter((c) => !alcance || alcanceDe(c.alcance) === alcance)
+    .filter((c) => !q || normalizar(`${c.titulo} ${c.origen ?? ''}`).includes(q))
+    .sort(ordenar);
+}
+
+/** De dónde sale cada competencia: la explicación que ve el usuario. */
+export function procedencia(c: CompetenciaGemelo): string {
+  if (c.demostrada) return 'Demostrada en una entrevista';
+  if (c.origen) return `En tu CV: «${c.origen}»`;
+  return c.anadida ? 'Añadida por ti' : 'En tu CV';
 }
 
 export interface EstadoGemelo {

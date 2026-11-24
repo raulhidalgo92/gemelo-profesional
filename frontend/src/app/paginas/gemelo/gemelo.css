@@ -56,7 +56,7 @@
 .acceso + .acceso {
   border-top: 1px solid var(--color-borde);
 }
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .acceso + .acceso {
     border-top: 0;
     border-left: 1px solid var(--color-borde);
@@ -93,7 +93,7 @@
 }
 
 /* Columnas de competencias separadas por líneas finas */
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .columna {
     padding: 2px 22px;
   }
@@ -107,7 +107,7 @@
     border-left: 1px solid var(--color-seleccion);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 1279px) {
   .columna {
     padding-right: 12px;
   }

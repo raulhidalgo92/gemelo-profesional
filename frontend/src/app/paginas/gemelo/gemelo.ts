@@ -1,6 +1,6 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import {
@@ -30,6 +30,7 @@ import {
   puestoActual,
   tareas,
 } from './panel';
+import { TodasCompetencias } from './todas';
 import { Trayectoria } from './trayectoria';
 
 const ICONOS_LOGRO = {
@@ -44,7 +45,7 @@ const ICONOS_LOGRO = {
 /** Panel «Mi gemelo»: punto de encuentro de la aplicación. */
 @Component({
   selector: 'app-gemelo',
-  imports: [LucideAngularModule, RouterLink, Trayectoria],
+  imports: [LucideAngularModule, RouterLink, TodasCompetencias, Trayectoria],
   templateUrl: './gemelo.html',
   styleUrl: './gemelo.css',
 })
@@ -71,7 +72,8 @@ export class GemeloPagina {
   private readonly hoy = new Date();
   protected readonly nombre = computed(() => this.sesion.usuario()?.nombre ?? '');
   protected readonly perfil = computed(() => this.datos()?.resumen.perfil ?? null);
-  protected readonly competencias = computed(() => this.datos()?.competencias ?? []);
+  /** Editable: el panel «Ver todas» quita y añade sobre esta misma lista */
+  protected readonly competencias = linkedSignal(() => this.datos()?.competencias ?? []);
 
   /** Puesto · años de experiencia · inglés */
   protected readonly datosPerfil = computed(() => {

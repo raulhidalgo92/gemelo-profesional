@@ -12,6 +12,8 @@ export interface CompetenciaGemelo {
   alcance: string | null;
   /** Término del CV del que se dedujo (explicación) */
   origen: string | null;
+  /** La añadió el usuario desde el catálogo ESCO */
+  anadida: boolean;
   demostrada: boolean;
 }
 
@@ -99,6 +101,11 @@ export class GemeloService {
 
   competencias(): Observable<CompetenciaGemelo[]> {
     return this.http.get<CompetenciaGemelo[]>('/api/gemelo/competencias');
+  }
+
+  /** Añade una competencia del catálogo ESCO que el CV no recogía. */
+  anadir(uri: string): Observable<CompetenciaGemelo> {
+    return this.http.post<CompetenciaGemelo>('/api/gemelo/competencias', { uri });
   }
 
   quitar(uri: string): Observable<void> {

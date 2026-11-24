@@ -7,7 +7,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, select
+from sqlalchemy import delete, exists, select
+from sqlalchemy.orm import aliased
 
 from app.api.deps import IA, SesionDB, UsuarioActual
 from app.servicios import cv
@@ -26,12 +27,18 @@ class CompetenciaGemelo(BaseModel):
     alcance: str | None
     # Fragmento del CV del que se dedujo (explicación)
     origen: str | None
+    # La añadió el usuario desde el catálogo ESCO
+    anadida: bool = False
     demostrada: bool
 
 
 def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
+    e = aliased(Evidencia)
+    manual = exists().where(
+        e.gemelo_id == Gemelo.id, e.competencia_uri == Competencia.uri, e.origen == "manual"
+    )
     filas = s.execute(
-        select(Competencia, GemeloCompetencia.nivel_demostrado, Evidencia.fragmento)
+        select(Competencia, GemeloCompetencia.nivel_demostrado, Evidencia.fragmento, manual)
         .join(GemeloCompetencia, GemeloCompetencia.competencia_uri == Competencia.uri)
         .join(Gemelo, Gemelo.id == GemeloCompetencia.gemelo_id)
         .outerjoin(
@@ -44,7 +51,7 @@ def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
         .order_by(Competencia.titulo)
     ).all()
     vistas: dict[str, CompetenciaGemelo] = {}
-    for comp, demostrado, fragmento in filas:
+    for comp, demostrado, fragmento, anadida in filas:
         vistas.setdefault(
             comp.uri,
             CompetenciaGemelo(
@@ -53,6 +60,7 @@ def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
                 tipo=comp.tipo,
                 alcance=comp.nivel_reutilizacion,
                 origen=fragmento,
+                anadida=anadida,
                 demostrada=demostrado is not None,
             ),
         )
@@ -156,6 +164,31 @@ def gemelo(usuario: UsuarioActual, s: SesionDB) -> GemeloSalida:
 @router.get("/competencias")
 def competencias(usuario: UsuarioActual, s: SesionDB) -> list[CompetenciaGemelo]:
     return _competencias(s, usuario.id)
+
+
+class NuevaCompetencia(BaseModel):
+    uri: Annotated[str, Field(max_length=255)]
+
+
+@router.post("/competencias", status_code=status.HTTP_201_CREATED)
+def anadir_competencia(
+    entrada: NuevaCompetencia, usuario: UsuarioActual, s: SesionDB
+) -> CompetenciaGemelo:
+    """El usuario añade una competencia del catálogo ESCO que su CV no recogía."""
+    if s.get(Competencia, entrada.uri) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "competencia_no_encontrada")
+    gemelo = cv.gemelo_de(s, usuario)
+    if s.get(GemeloCompetencia, (gemelo.id, entrada.uri)) is None:
+        s.add(
+            GemeloCompetencia(
+                gemelo_id=gemelo.id,
+                competencia_uri=entrada.uri,
+                nivel_declarado=cv.NIVEL_DECLARADO,
+            )
+        )
+        s.add(Evidencia(gemelo_id=gemelo.id, competencia_uri=entrada.uri, origen="manual"))
+        s.commit()
+    return next(c for c in _competencias(s, usuario.id) if c.uri == entrada.uri)
 
 
 @router.delete("/competencias", status_code=status.HTTP_204_NO_CONTENT)

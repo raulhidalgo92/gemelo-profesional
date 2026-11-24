@@ -1,0 +1,185 @@
+<dialog
+  #cajon
+  class="cajon"
+  aria-labelledby="todas-titulo"
+  (close)="alCerrar()"
+  (click)="clicFuera($event)"
+>
+  <div class="flex h-full flex-col">
+    <header class="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
+      <div>
+        <h2 id="todas-titulo" class="text-[21px] font-semibold tracking-tight">Tus competencias</h2>
+        <p class="mt-0.5 text-[13.5px] text-tinta-suave">
+          <b class="font-semibold text-tinta">{{ demostradas() }} de {{ competencias().length }}</b>
+          demostradas
+        </p>
+      </div>
+      <button type="button" class="icono" aria-label="Cerrar" (click)="cerrar()">
+        <lucide-icon [img]="iconos.X" [size]="18" />
+      </button>
+    </header>
+
+    <div class="grid gap-2.5 border-b border-borde px-6 pb-3.5">
+      <label class="buscador">
+        <lucide-icon [img]="iconos.Search" [size]="16" />
+        <input
+          type="search"
+          placeholder="Buscar en tus competencias"
+          aria-label="Buscar en tus competencias"
+          [value]="texto()"
+          (input)="buscarTexto($any($event.target).value)"
+        />
+      </label>
+
+      <div
+        class="estados"
+        role="group"
+        aria-label="Filtrar por estado"
+        [style.--i]="indiceEstado()"
+      >
+        @for (e of estados; track e.clave) {
+          <button
+            type="button"
+            [class.activo]="estado() === e.clave"
+            [attr.aria-pressed]="estado() === e.clave"
+            (click)="estado.set(e.clave)"
+          >
+            {{ e.texto }} <small>{{ cuentas()[e.clave] }}</small>
+          </button>
+        }
+      </div>
+
+      <div class="alcances" role="group" aria-label="Filtrar por alcance">
+        <button
+          type="button"
+          class="todos"
+          title="Todos los alcances"
+          aria-label="Todos los alcances"
+          [class.activo]="!alcance()"
+          [attr.aria-pressed]="!alcance()"
+          (click)="alcance.set(null)"
+        >
+          <lucide-icon [img]="iconos.Layers" [size]="15" />
+        </button>
+        @for (a of alcances; track a.clave) {
+          <button
+            type="button"
+            [class.activo]="alcance() === a.clave"
+            [attr.aria-pressed]="alcance() === a.clave"
+            (click)="cambiarAlcance(a.clave)"
+          >
+            {{ a.corto }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <ul class="min-h-0 flex-1 overflow-y-auto px-3 py-1.5">
+      @for (c of lista(); track c.uri) {
+        <li class="fila">
+          <div class="flex items-center gap-[11px]">
+            <span class="estado" [class.hecha]="c.demostrada">
+              @if (c.demostrada) {
+                <lucide-icon [img]="iconos.Check" [size]="12" [strokeWidth]="2.5" />
+              }
+            </span>
+            <div class="min-w-0 flex-1">
+              <b class="block text-sm font-semibold first-letter:uppercase">{{ c.titulo }}</b>
+              <small class="block text-[12.5px] leading-snug text-tinta-suave">{{
+                procedencia(c)
+              }}</small>
+            </div>
+            <button
+              type="button"
+              class="icono quitar"
+              title="Quitar"
+              [attr.aria-label]="'Quitar ' + c.titulo"
+              (click)="quitar(c)"
+            >
+              <lucide-icon [img]="iconos.Trash2" [size]="15" />
+            </button>
+          </div>
+          @if (confirmando() === c.uri) {
+            <div class="mt-2 ml-[33px] text-[13px] text-tinta-suave" role="alert">
+              Perderás la evidencia de tu entrevista. ¿Quitarla?
+              <div class="mt-[7px] flex gap-1.5">
+                <button type="button" class="pequeno" (click)="confirmando.set(null)">
+                  Cancelar
+                </button>
+                <button type="button" class="pequeno oscuro" (click)="quitar(c)">Quitar</button>
+              </div>
+            </div>
+          }
+        </li>
+      } @empty {
+        <li class="px-4 py-9 text-center text-sm text-tinta-suave">
+          {{
+            competencias().length
+              ? 'Ninguna competencia coincide.'
+              : 'Todavía no tienes competencias.'
+          }}
+        </li>
+      }
+    </ul>
+
+    <footer class="relative border-t border-borde px-6 pt-3.5 pb-[18px]">
+      @if (aviso(); as a) {
+        <div class="aviso" role="status">
+          <span>{{ a.texto }}</span>
+          @if (a.deshacer) {
+            <button type="button" (click)="deshacer()">Deshacer</button>
+          }
+        </div>
+      }
+      @if (anadiendo()) {
+        <div class="mb-[9px] flex items-center justify-between text-sm font-semibold">
+          <span>Añadir competencia</span>
+          <button
+            type="button"
+            class="text-[13px] font-normal text-tinta-suave hover:text-tinta"
+            (click)="cerrarAnadir()"
+          >
+            Cancelar
+          </button>
+        </div>
+        <label class="buscador">
+          <lucide-icon [img]="iconos.Search" [size]="16" />
+          <input
+            #buscadorCatalogo
+            type="search"
+            placeholder="Busca en el catálogo ESCO"
+            aria-label="Buscar en el catálogo ESCO"
+            [value]="consulta()"
+            (input)="consulta.set($any($event.target).value)"
+          />
+        </label>
+        <ul class="resultados" aria-live="polite">
+          @if (catalogo(); as lista) {
+            @for (r of lista; track r.uri) {
+              <li>
+                <button type="button" (click)="anadir(r)">
+                  <span class="first-letter:uppercase">{{ r.titulo }}</span>
+                  <span class="flex shrink-0 items-center gap-2">
+                    <small>{{ corto(r.alcance) }}</small>
+                    <lucide-icon class="text-acento" [img]="iconos.Plus" [size]="15" />
+                  </span>
+                </button>
+              </li>
+            } @empty {
+              <li class="p-[9px] text-[13px] text-tinta-suave">Sin resultados en el catálogo.</li>
+            }
+          } @else {
+            <li class="p-[9px] text-[13px] text-tinta-tenue">
+              Escribe lo que sabes hacer, por ejemplo «facturación».
+            </li>
+          }
+        </ul>
+      } @else {
+        <button type="button" class="anadir" (click)="abrirAnadir()">
+          <lucide-icon [img]="iconos.Plus" [size]="16" />
+          Añadir competencia
+        </button>
+      }
+    </footer>
+  </div>
+</dialog>

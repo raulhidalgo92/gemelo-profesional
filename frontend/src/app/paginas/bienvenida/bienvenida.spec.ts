@@ -86,7 +86,14 @@ describe('BienvenidaPagina', () => {
     const aplicar = http.expectOne('/api/gemelo/cv/aplicar');
     expect(aplicar.request.body.competencias).toHaveLength(1);
     aplicar.flush([
-      { uri: 'u1', titulo: 'contabilidad', tipo: null, origen: 'Contabilidad', demostrada: false },
+      {
+        uri: 'u1',
+        titulo: 'contabilidad',
+        tipo: null,
+        origen: 'Contabilidad',
+        anadida: false,
+        demostrada: false,
+      },
     ]);
     fixture.detectChanges();
 

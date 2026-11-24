@@ -201,6 +201,32 @@ def test_aplicar_ignora_competencias_que_no_son_de_esco(usuario_con_sesion):
     assert (r.status_code, r.json()) == (200, [])
 
 
+def test_anadir_una_competencia_del_catalogo(usuario_con_sesion, bd):
+    cliente, _ = usuario_con_sesion
+    excel = {"uri": f"{ESCO}/excel", "termino": "Excel", "similitud": 0.8}
+    cliente.post(
+        "/api/gemelo/cv/aplicar", json={"perfil": PERFIL.model_dump(), "competencias": [excel]}
+    )
+
+    r = cliente.post("/api/gemelo/competencias", json={"uri": f"{ESCO}/sql"})
+    assert r.status_code == 201
+    assert (r.json()["titulo"], r.json()["anadida"], r.json()["origen"]) == ("SQL", True, None)
+    # Añadirla otra vez no la duplica
+    cliente.post("/api/gemelo/competencias", json={"uri": f"{ESCO}/sql"})
+    with bd() as s:
+        assert s.query(Evidencia).filter_by(origen="manual").count() == 1
+
+    # Un CV nuevo que no la trae no la quita ni pregunta por ella
+    assert _analizar(cliente)["ya_no"] == []
+    r = cliente.post(
+        "/api/gemelo/cv/aplicar", json={"perfil": PERFIL.model_dump(), "competencias": []}
+    )
+    assert [c["titulo"] for c in r.json()] == ["SQL"]
+
+    r = cliente.post("/api/gemelo/competencias", json={"uri": "http://ejemplo.com/falsa"})
+    assert (r.status_code, r.json()["detail"]) == (404, "competencia_no_encontrada")
+
+
 def test_archivo_no_admitido(usuario_con_sesion):
     cliente, _ = usuario_con_sesion
     r = cliente.post(

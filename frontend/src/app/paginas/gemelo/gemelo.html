@@ -48,7 +48,7 @@
       </span>
     </a>
 
-    <section class="tarjeta mb-4 grid p-0! lg:grid-cols-3" aria-label="Accesos">
+    <section class="tarjeta mb-4 grid p-0! xl:grid-cols-3" aria-label="Accesos">
       @for (a of accesos; track a.titulo) {
         <div class="acceso flex items-center gap-[13px] px-5 py-[18px]">
           <span
@@ -64,7 +64,7 @@
       }
     </section>
 
-    <div class="mb-4 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.75fr)_minmax(300px,1fr)]">
+    <div class="mb-4 grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <app-trayectoria [perfil]="perfil()" [actualizado]="actualizado()" />
 
       <section class="tarjeta">
@@ -93,7 +93,7 @@
             >{{ conseguidos().length }} de {{ logros().length }}</span
           >
         </div>
-        <ul class="flex justify-between gap-1 p-1">
+        <ul class="flex flex-wrap gap-3.5 p-1">
           @for (l of logros(); track l.texto) {
             <li
               class="logro"
@@ -121,17 +121,26 @@
     <section class="tarjeta">
       <div class="mb-[18px] flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <h2 class="titulo-seccion">Tus competencias</h2>
-        @if (competencias().length) {
-          <span class="text-[13px] text-tinta-tenue">
-            <b class="font-semibold text-tinta"
-              >{{ demostradas() }} de {{ competencias().length }}</b
-            >
-            demostradas
-          </span>
-        }
+        <span class="flex items-center gap-3.5 text-[13px]">
+          @if (competencias().length) {
+            <span class="text-tinta-tenue">
+              <b class="font-semibold text-tinta"
+                >{{ demostradas() }} de {{ competencias().length }}</b
+              >
+              demostradas
+            </span>
+          }
+          <button
+            type="button"
+            class="font-semibold whitespace-nowrap hover:text-acento"
+            (click)="todas.abrir()"
+          >
+            {{ competencias().length ? 'Ver todas' : 'Añadir' }}
+          </button>
+        </span>
       </div>
       @if (competencias().length) {
-        <div class="grid grid-cols-2 gap-y-[22px] lg:grid-cols-4 lg:gap-y-0">
+        <div class="grid grid-cols-2 gap-y-[22px] xl:grid-cols-4 xl:gap-y-0">
           @for (c of columnas(); track c.titulo) {
             <div class="columna flex min-w-0 flex-col">
               <h3 class="text-sm">{{ c.titulo }}</h3>
@@ -161,7 +170,7 @@
                 <ul class="text-[12.5px] leading-[1.65] text-tinta-suave">
                   @for (x of c.visibles; track x.uri) {
                     <li
-                      class="first-letter:uppercase lg:truncate"
+                      class="first-letter:uppercase xl:truncate"
                       [class.demostrada]="x.demostrada"
                       [title]="x.titulo"
                     >
@@ -185,5 +194,6 @@
         </p>
       }
     </section>
+    <app-todas-competencias #todas [(competencias)]="competencias" />
   }
 }
