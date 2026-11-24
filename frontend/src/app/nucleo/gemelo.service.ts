@@ -8,6 +8,8 @@ export interface CompetenciaGemelo {
   uri: string;
   titulo: string;
   tipo: string | null;
+  /** Nivel de reutilización ESCO: transversal, cross-sector, sector-specific u occupation-specific */
+  alcance: string | null;
   /** Término del CV del que se dedujo (explicación) */
   origen: string | null;
   demostrada: boolean;
@@ -53,6 +55,12 @@ export interface AnalisisCv {
   trayectoria_cambia: boolean;
 }
 
+/** Sin perfil: todavía no hay un CV del que se haya extraído la trayectoria. */
+export interface ResumenGemelo {
+  perfil: PerfilCv | null;
+  actualizado_en: string | null;
+}
+
 /** Competencias del gemelo del usuario y análisis del CV. */
 @Injectable({ providedIn: 'root' })
 export class GemeloService {
@@ -83,6 +91,10 @@ export class GemeloService {
     return this.analizarCv(archivo).pipe(
       switchMap((a) => this.aplicarCv(a.perfil, a.competencias)),
     );
+  }
+
+  resumen(): Observable<ResumenGemelo> {
+    return this.http.get<ResumenGemelo>('/api/gemelo');
   }
 
   competencias(): Observable<CompetenciaGemelo[]> {

@@ -130,6 +130,7 @@ def test_analizar_no_guarda_nada_ni_envia_datos_personales(usuario_con_sesion, b
         assert dato not in recibido["texto"]
     with bd() as s:
         assert s.query(GemeloCompetencia).count() == 0
+    assert cliente.get("/api/gemelo").json() == {"perfil": None, "actualizado_en": None}
 
 
 def test_aplicar_guarda_lo_confirmado(usuario_con_sesion, bd):
@@ -142,10 +143,11 @@ def test_aplicar_guarda_lo_confirmado(usuario_con_sesion, bd):
     assert [c["titulo"] for c in r.json()] == ["SQL", "utilizar hojas de cálculo"]
     assert r.json()[1]["origen"] == "Excel"
     with bd() as s:
-        gemelo = s.query(Gemelo).one()
-        assert gemelo.trayectoria["experiencias"][0]["sector"] == "Banca"
-        assert gemelo.nivel_ingles == "B2"
         assert {e.origen for e in s.query(Evidencia)} == {"cv"}
+    gemelo = cliente.get("/api/gemelo").json()
+    assert gemelo["perfil"]["experiencias"][0]["sector"] == "Banca"
+    assert gemelo["perfil"]["nivel_ingles"] == "B2"
+    assert gemelo["actualizado_en"]
 
     # Un segundo análisis del mismo CV no trae cambios
     analisis = _analizar(cliente)

@@ -1,75 +1,71 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ApiService, ModoBusqueda } from '../../nucleo/api.service';
-import { GemeloService } from '../../nucleo/gemelo.service';
+import { CompetenciaGemelo, GemeloService, ResumenGemelo } from '../../nucleo/gemelo.service';
+import { SesionService } from '../../nucleo/sesion.service';
 import { GemeloPagina } from './gemelo';
 
+const PERFIL = {
+  resumen: 'Administrativa contable con 8 años de experiencia.',
+  experiencias: [
+    { puesto: 'Auxiliar administrativa', sector: 'Logística', inicio: 2018, fin: 2020 },
+    { puesto: 'Administrativa contable', sector: 'Logística', inicio: 2020, fin: null },
+  ],
+  formacion: [{ titulo: 'Técnico Superior en Administración', inicio: 2016, fin: 2018 }],
+  nivel_ingles: 'B2',
+};
+
+function competencia(titulo: string, alcance: string, demostrada = false): CompetenciaGemelo {
+  return { uri: titulo, titulo, tipo: 'skill', alcance, origen: titulo, demostrada };
+}
+
+function crear(resumen: ResumenGemelo, competencias: CompetenciaGemelo[]): HTMLElement {
+  TestBed.configureTestingModule({
+    imports: [GemeloPagina],
+    providers: [
+      provideRouter([]),
+      { provide: SesionService, useValue: { usuario: signal({ nombre: 'Laura' }) } },
+      {
+        provide: GemeloService,
+        useValue: { resumen: () => of(resumen), competencias: () => of(competencias) },
+      },
+    ],
+  });
+  const fixture = TestBed.createComponent(GemeloPagina);
+  fixture.detectChanges();
+  return fixture.nativeElement as HTMLElement;
+}
+
 describe('GemeloPagina', () => {
-  const llamadas: { q: string; modo: ModoBusqueda }[] = [];
-  const apiFalsa = {
-    salud: () => of({ estado: 'ok', version: '0.1.0', base_datos: true }),
-    resumenMercado: () => of(null),
-    buscarCompetencias: (q: string, modo: ModoBusqueda) => {
-      llamadas.push({ q, modo });
-      return of({
-        modo,
-        resultados: [{ uri: 'u1', titulo: 'TypeScript', tipo: 'knowledge', similitud: 0.61 }],
-      });
-    },
-  };
+  it('resume el perfil, la trayectoria y las competencias por alcance', () => {
+    const el = crear({ perfil: PERFIL, actualizado_en: new Date().toISOString() }, [
+      competencia('inglés', 'transversal', true),
+      competencia('contabilidad', 'sector-specific'),
+      competencia('facturación', 'sector-specific'),
+    ]);
+    const texto = el.textContent!.replace(/\s+/g, '');
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    llamadas.length = 0;
-    await TestBed.configureTestingModule({
-      imports: [GemeloPagina],
-      providers: [
-        provideRouter([]),
-        { provide: ApiService, useValue: apiFalsa },
-        { provide: GemeloService, useValue: { competencias: () => of([]) } },
-      ],
-    }).compileComponents();
+    expect(texto).toContain('Hola,Laura');
+    expect(texto).toContain('Administrativacontable·8añosdeexperiencia·InglésB2');
+    expect(texto).toContain('Actualizadohoy');
+    // Al entrar se muestra el trabajo actual
+    expect(texto).toContain('Administrativacontable·Logística2020–actualidadExperiencia');
+    expect(texto).toContain('1de3demostradas');
+    expect(texto).toContain('DetusectorTuespecialidad0de2');
+    // Tareas: cuenta, CV y una competencia demostrada; falta elegir destino
+    expect(texto).toContain('Tuavance3de5');
+    expect(texto).toContain('SiguientetareaEligetudestino');
+    expect(texto).toContain('Último:Primeraevidencia');
   });
 
-  afterEach(() => vi.useRealTimers());
-
-  async function escribir(fixture: ReturnType<typeof TestBed.createComponent<GemeloPagina>>) {
-    fixture.detectChanges();
-    await vi.advanceTimersByTimeAsync(400);
-    fixture.detectChanges();
-  }
-
-  it('busca por significado y repite la búsqueda al cambiar a texto', async () => {
-    const fixture = TestBed.createComponent(GemeloPagina);
-    const html = fixture.nativeElement as HTMLElement;
-    const entrada = html.querySelector('input[type=search]') as HTMLInputElement;
-
-    entrada.value = 'Angular';
-    entrada.dispatchEvent(new Event('input'));
-    await escribir(fixture);
-
-    expect(llamadas).toEqual([{ q: 'Angular', modo: 'semantico' }]);
-    expect(html.querySelector('.resultados li')?.textContent).toContain('TypeScript');
-    expect(html.querySelector('.etiqueta')?.textContent).toContain('conocimiento');
-
-    (html.querySelectorAll('.selector button')[1] as HTMLButtonElement).click();
-    await escribir(fixture);
-
-    expect(llamadas.at(-1)).toEqual({ q: 'Angular', modo: 'texto' });
-  });
-
-  it('no busca con menos de dos caracteres', async () => {
-    const fixture = TestBed.createComponent(GemeloPagina);
-    const entrada = (fixture.nativeElement as HTMLElement).querySelector(
-      'input[type=search]',
-    ) as HTMLInputElement;
-    entrada.value = 'A';
-    entrada.dispatchEvent(new Event('input'));
-    await escribir(fixture);
-    expect(llamadas).toEqual([]);
+  it('sin CV invita a subirlo', () => {
+    const el = crear({ perfil: null, actualizado_en: null }, []);
+    expect(el.textContent).toContain('Subir mi CV');
+    expect(el.textContent!.replace(/\s+/g, '')).toContain('SiguientetareaSubetuCV');
+    expect(el.querySelectorAll('.logro.conseguido')).toHaveLength(0);
   });
 });

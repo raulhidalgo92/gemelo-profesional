@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Gemelo del usuario: análisis del CV, trayectoria y competencias declaradas."""
 
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
@@ -21,6 +22,8 @@ class CompetenciaGemelo(BaseModel):
     uri: str
     titulo: str
     tipo: str | None
+    # Nivel de reutilización ESCO: transversal, cross-sector, sector-specific u occupation-specific
+    alcance: str | None
     # Fragmento del CV del que se dedujo (explicación)
     origen: str | None
     demostrada: bool
@@ -48,6 +51,7 @@ def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
                 uri=comp.uri,
                 titulo=comp.titulo,
                 tipo=comp.tipo,
+                alcance=comp.nivel_reutilizacion,
                 origen=fragmento,
                 demostrada=demostrado is not None,
             ),
@@ -132,6 +136,21 @@ def aplicar_cv(
         set(entrada.conservar),
     )
     return _competencias(s, usuario.id)
+
+
+class GemeloSalida(BaseModel):
+    # Sin perfil: todavía no ha subido un CV con el que extraer la trayectoria
+    perfil: PerfilCv | None
+    actualizado_en: datetime | None
+
+
+@router.get("")
+def gemelo(usuario: UsuarioActual, s: SesionDB) -> GemeloSalida:
+    g = s.scalar(select(Gemelo).where(Gemelo.usuario_id == usuario.id))
+    if g is None or g.trayectoria is None:
+        return GemeloSalida(perfil=None, actualizado_en=None)
+    perfil = PerfilCv.model_validate({**g.trayectoria, "nivel_ingles": g.nivel_ingles})
+    return GemeloSalida(perfil=perfil, actualizado_en=g.actualizado_en)
 
 
 @router.get("/competencias")
