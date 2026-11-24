@@ -7,7 +7,19 @@ import { Observable, catchError, firstValueFrom, map, of, tap } from 'rxjs';
 export interface Usuario {
   nombre: string;
   email: string;
+  /** Avatar de la colección de la app; null: la inicial */
+  avatar: string | null;
   bienvenida_pendiente: boolean;
+}
+
+export interface Cuenta {
+  nombre: string;
+  email: string;
+  verificada_en: string | null;
+  consentimiento_en: string | null;
+  consentimiento_version: string | null;
+  /** Sesiones abiertas en otros dispositivos */
+  otras_sesiones: number;
 }
 
 export interface DatosRegistro {
@@ -78,6 +90,36 @@ export class SesionService {
     return this.http.post<void>(`${BASE}/salir`, {}).pipe(tap(() => this.usuario.set(null)));
   }
 
+  cuenta(): Observable<Cuenta> {
+    return this.http.get<Cuenta>(BASE);
+  }
+
+  /** El correo no se puede cambiar: identifica la cuenta. */
+  cambiarNombre(nombre: string): Observable<Usuario> {
+    return this.http.patch<Usuario>(BASE, { nombre }).pipe(tap((u) => this.usuario.set(u)));
+  }
+
+  /** null vuelve a la inicial. */
+  cambiarAvatar(avatar: string | null): Observable<Usuario> {
+    return this.http.patch<Usuario>(BASE, { avatar }).pipe(tap((u) => this.usuario.set(u)));
+  }
+
+  /** Cierra también las sesiones de otros dispositivos. */
+  cambiarContrasena(actual: string, nueva: string): Observable<void> {
+    return this.http.post<void>(`${BASE}/contrasena`, { actual, nueva });
+  }
+
+  cerrarOtrasSesiones(): Observable<void> {
+    return this.http.post<void>(`${BASE}/cerrar-sesiones`, {});
+  }
+
+  /** Borra la cuenta, el gemelo y todos sus datos. */
+  darDeBaja(contrasena: string): Observable<void> {
+    return this.http
+      .delete<void>(BASE, { body: { contrasena } })
+      .pipe(tap(() => this.usuario.set(null)));
+  }
+
   terminarBienvenida(): Observable<void> {
     return this.http.post<void>(`${BASE}/bienvenida`, {}).pipe(
       tap(() => {
@@ -106,6 +148,8 @@ function guardar(clave: string, valor: string): void {
 
 const MENSAJES: Record<string, string> = {
   credenciales: 'El correo o la contraseña no son correctos.',
+  contrasena_actual: 'La contraseña actual no es correcta.',
+  contrasena_incorrecta: 'La contraseña no es correcta.',
   cuenta_no_verificada: 'Tu cuenta aún no está activada. Te hemos enviado un código nuevo.',
   codigo_incorrecto: 'Ese código no es correcto. Revísalo e inténtalo de nuevo.',
   codigo_caducado: 'El código ha caducado. Pide uno nuevo.',

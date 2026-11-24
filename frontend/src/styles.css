@@ -91,11 +91,32 @@
 
 @layer components {
   /* Escala tipográfica */
+  .cabecera-pagina {
+    @apply mb-6 flex flex-wrap items-center justify-between gap-5;
+  }
   .titulo-pagina {
-    @apply text-3xl leading-tight font-semibold tracking-tight sm:text-[34px];
+    @apply text-[28px] leading-tight font-semibold tracking-tight sm:text-[30px];
   }
   .subtitulo-pagina {
-    @apply mt-2 max-w-2xl text-base leading-relaxed text-tinta-suave sm:text-[17px];
+    @apply mt-1 max-w-2xl text-[14.5px] leading-relaxed text-tinta-suave;
+  }
+  /* Páginas aparte del núcleo de la app (Mi cuenta, Privacidad): columna estrecha y centrada */
+  .pagina-estrecha {
+    @apply mx-auto max-w-[720px];
+  }
+  /* Apartados sin tarjetas: título arriba y contenido debajo. Entre apartados solo hay espacio;
+     las líneas finas separan los elementos de un mismo apartado */
+  .apartado {
+    @apply mt-12;
+  }
+  .apartado-titulo {
+    @apply text-[17px] leading-snug font-semibold tracking-tight;
+  }
+  .apartado-ayuda {
+    @apply mt-0.5 text-[13.5px] leading-relaxed text-tinta-suave;
+  }
+  .apartado-contenido {
+    @apply mt-4;
   }
 
   /* Texto corrido dentro de una tarjeta */
@@ -178,6 +199,111 @@
     .cajon::backdrop {
       animation: none;
     }
+  }
+
+  /* Diálogo centrado (<dialog class="dialogo">) para confirmar acciones importantes */
+  .dialogo {
+    width: min(480px, calc(100vw - 32px));
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    background: var(--color-superficie);
+    color: var(--color-tinta);
+    box-shadow: 0 24px 60px -24px rgb(23 23 28 / 45%);
+  }
+  .dialogo[open] {
+    animation: dialogo-entrar 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .dialogo::backdrop {
+    background: rgb(23 23 28 / 35%);
+    animation: cajon-velo 0.2s;
+  }
+  @keyframes dialogo-entrar {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dialogo[open],
+    .dialogo::backdrop {
+      animation: none;
+    }
+  }
+
+  /* Botón pequeño de las filas de ajustes (Mi cuenta) */
+  .boton-fila {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 13px;
+    border: 1px solid var(--color-borde);
+    border-radius: 10px;
+    background: var(--color-superficie);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      opacity 0.2s ease,
+      transform 0.12s ease;
+  }
+  .boton-fila:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .boton-fila:active:not(:disabled) {
+      transform: none;
+    }
+  }
+  /* El botón que abre un formulario se queda «pulsado» mientras está abierto */
+  .boton-fila[aria-expanded='true'] {
+    border-color: var(--color-seleccion);
+    background: var(--color-seleccion);
+  }
+  .boton-fila:hover:not(:disabled) {
+    border-color: rgb(23 23 28 / 20%);
+    background: var(--color-fondo);
+  }
+  .boton-fila:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(91 79 245 / 20%);
+  }
+  .boton-fila:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .boton-fila.oscuro {
+    border-color: var(--color-tinta);
+    background: var(--color-tinta);
+    color: #fff;
+  }
+  .boton-fila.oscuro:hover:not(:disabled) {
+    background: #2a2a33;
+  }
+  /* Eliminar: neutro, solo el texto en rojo */
+  .boton-fila.peligro {
+    color: #b42318;
+  }
+  .boton-fila.peligro:hover {
+    border-color: #f6d2cd;
+    background: #fef6f5;
+    color: #b42318;
+  }
+  .boton-fila.rojo {
+    border-color: #fecdca;
+    background: #fef3f2;
+    color: #b42318;
+  }
+  .boton-fila.rojo:hover:not(:disabled) {
+    border-color: #b42318;
+    background: #b42318;
+    color: #fff;
   }
 
   /* Aviso flotante abajo, centrado sobre el contenido (a la derecha del menú en escritorio) */

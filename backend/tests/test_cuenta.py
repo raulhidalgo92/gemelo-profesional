@@ -59,7 +59,12 @@ def test_registro_y_activacion_con_codigo(cliente, correos, bd):
         "/api/cuenta/verificar", json={"email": DATOS["email"], "codigo": codigo_de(msg)}
     )
     assert r.status_code == 200
-    assert r.json() == {"nombre": "Ana", "email": "ana@ejemplo.com", "bienvenida_pendiente": True}
+    assert r.json() == {
+        "nombre": "Ana",
+        "email": "ana@ejemplo.com",
+        "avatar": None,
+        "bienvenida_pendiente": True,
+    }
     assert "httponly" in r.headers["set-cookie"].lower()
 
     assert cliente.get("/api/cuenta/yo").json()["nombre"] == "Ana"
@@ -155,7 +160,7 @@ def test_bienvenida_y_baja_de_la_cuenta(cliente, correos, bd):
     assert cliente.get("/api/cuenta/yo").json()["bienvenida_pendiente"] is False
 
     malo = cliente.request("DELETE", "/api/cuenta", json={"contrasena": "no-es-la-clave"})
-    assert malo.status_code == 401
+    assert (malo.status_code, malo.json()["detail"]) == (400, "contrasena_incorrecta")
     r = cliente.request("DELETE", "/api/cuenta", json={"contrasena": DATOS["contrasena"]})
     assert r.status_code == 204
     with bd() as s:
@@ -173,3 +178,76 @@ def test_datos_de_registro_no_validos(cliente, cambio):
 def test_sin_cabecera_csrf_se_rechaza(bd):
     r = TestClient(app).post("/api/cuenta/registro", json=DATOS)
     assert (r.status_code, r.json()["detail"]) == (403, "falta_cabecera_csrf")
+
+
+def activa(cliente, correos) -> TestClient:
+    """Cuenta activada con sesión en `cliente` y otra sesión en un segundo dispositivo."""
+    msg = registrar(cliente, correos)
+    cliente.post("/api/cuenta/verificar", json={"email": DATOS["email"], "codigo": codigo_de(msg)})
+    otro = TestClient(app, headers=CSRF)
+    entrar = {"email": DATOS["email"], "contrasena": DATOS["contrasena"]}
+    assert otro.post("/api/cuenta/entrar", json=entrar).status_code == 200
+    return otro
+
+
+def test_detalle_y_cambio_de_nombre(cliente, correos):
+    activa(cliente, correos)
+    cuenta_ = cliente.get("/api/cuenta").json()
+    assert (cuenta_["email"], cuenta_["otras_sesiones"]) == ("ana@ejemplo.com", 1)
+    assert cuenta_["verificada_en"] and cuenta_["consentimiento_version"]
+
+    r = cliente.patch("/api/cuenta", json={"nombre": "  Ana María "})
+    assert r.json()["nombre"] == "Ana María"
+    assert cliente.patch("/api/cuenta", json={"nombre": "   "}).status_code == 422
+    # El correo no se puede cambiar
+    cliente.patch("/api/cuenta", json={"nombre": "Ana", "email": "otro@ejemplo.com"})
+    assert cliente.get("/api/cuenta/yo").json()["email"] == "ana@ejemplo.com"
+
+
+def test_elegir_avatar(cliente, correos):
+    activa(cliente, correos)
+    assert cliente.get("/api/cuenta/yo").json()["avatar"] is None
+    r = cliente.patch("/api/cuenta", json={"avatar": "luna"})
+    # Cambiar el avatar no toca el nombre
+    assert (r.json()["avatar"], r.json()["nombre"]) == ("luna", "Ana")
+    assert cliente.patch("/api/cuenta", json={"avatar": "foto.jpg"}).status_code == 422
+    # Cambiar el nombre no toca el avatar; null vuelve a la inicial
+    assert cliente.patch("/api/cuenta", json={"nombre": "Ana"}).json()["avatar"] == "luna"
+    assert cliente.patch("/api/cuenta", json={"avatar": None}).json()["avatar"] is None
+
+
+def test_cambiar_contrasena_cierra_las_demas_sesiones(cliente, correos):
+    otro = activa(cliente, correos)
+    nueva = {"actual": "no-es-la-clave", "nueva": "otra-clave-larga"}
+    r = cliente.post("/api/cuenta/contrasena", json=nueva)
+    assert (r.status_code, r.json()["detail"]) == (400, "contrasena_actual")
+    corta = {"actual": DATOS["contrasena"], "nueva": "corta"}
+    assert cliente.post("/api/cuenta/contrasena", json=corta).status_code == 422
+
+    nueva["actual"] = DATOS["contrasena"]
+    assert cliente.post("/api/cuenta/contrasena", json=nueva).status_code == 204
+    assert cliente.get("/api/cuenta/yo").status_code == 200
+    assert otro.get("/api/cuenta/yo").status_code == 401
+    entrar = {"email": DATOS["email"], "contrasena": "otra-clave-larga"}
+    assert otro.post("/api/cuenta/entrar", json=entrar).status_code == 200
+
+
+def test_cerrar_las_demas_sesiones(cliente, correos):
+    otro = activa(cliente, correos)
+    assert cliente.post("/api/cuenta/cerrar-sesiones").status_code == 204
+    assert cliente.get("/api/cuenta").json()["otras_sesiones"] == 0
+    assert cliente.get("/api/cuenta/yo").status_code == 200
+    assert otro.get("/api/cuenta/yo").status_code == 401
+
+
+def test_descargar_mis_datos(cliente, correos, bd):
+    activa(cliente, correos)
+    r = cliente.get("/api/cuenta/exportar")
+    assert r.status_code == 200
+    assert "attachment" in r.headers["content-disposition"]
+    datos = r.json()
+    assert datos["cuenta"]["email"] == "ana@ejemplo.com"
+    assert (datos["gemelo"]["competencias"], datos["gemelo"]["evidencias"]) == ([], [])
+    # Nunca salen los secretos
+    assert "hash" not in r.text
+    assert TestClient(app).get("/api/cuenta/exportar").status_code == 401

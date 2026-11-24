@@ -94,6 +94,11 @@ export const routes: Routes = [
           import('./paginas/entrenador/entrenador').then((m) => m.EntrenadorPagina),
       },
       {
+        path: 'cuenta',
+        title: 'Mi cuenta',
+        loadComponent: () => import('./paginas/cuenta/cuenta').then((m) => m.CuentaPagina),
+      },
+      {
         path: 'privacidad',
         title: 'Privacidad · Gemelo profesional',
         loadComponent: () => import('./paginas/acceso/privacidad').then((m) => m.PrivacidadPagina),

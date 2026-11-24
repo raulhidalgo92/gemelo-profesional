@@ -3,7 +3,7 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Eye, EyeOff, LoaderCircle, LucideAngularModule } from 'lucide-angular';
+import { Check, Eye, EyeOff, LoaderCircle, LucideAngularModule } from 'lucide-angular';
 
 import { SesionService, codigoDeError, mensajeDeError } from '../../nucleo/sesion.service';
 
@@ -15,6 +15,16 @@ import { SesionService, codigoDeError, mensajeDeError } from '../../nucleo/sesio
       <h1 class="titulo-acceso">¿Tu siguiente paso?</h1>
       <p class="mt-2 text-tinta-suave">Entra y deja que tu gemelo te ayude a descubrirlo.</p>
     </div>
+
+    @if (despedida) {
+      <p
+        class="mb-6 flex items-center gap-2.5 rounded-xl bg-acento-suave px-4 py-3 text-sm text-tinta"
+        role="status"
+      >
+        <lucide-icon class="shrink-0 text-acento" [img]="iconos.Check" [size]="16" />
+        {{ despedida }}
+      </p>
+    }
 
     <form [formGroup]="form" (ngSubmit)="enviar()" novalidate class="space-y-5">
       <div>
@@ -65,7 +75,9 @@ export class EntrarPagina {
   private readonly sesion = inject(SesionService);
   private readonly router = inject(Router);
 
-  protected readonly iconos = { Eye, EyeOff, LoaderCircle };
+  protected readonly iconos = { Check, Eye, EyeOff, LoaderCircle };
+  /** Mensaje que deja otra pantalla al traer aquí (por ejemplo, tras eliminar la cuenta) */
+  protected readonly despedida: string = history.state?.aviso ?? '';
   protected readonly enviando = signal(false);
   protected readonly error = signal('');
   protected readonly verClave = signal(false);

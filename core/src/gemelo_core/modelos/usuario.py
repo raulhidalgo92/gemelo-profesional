@@ -31,6 +31,8 @@ class Usuario(ConMarcasTiempo, Base):
     verificado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Asistente de bienvenida terminado (o pospuesto) por el usuario
     bienvenida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Avatar elegido de la colección de la app; sin avatar se muestra la inicial
+    avatar: Mapped[str | None] = mapped_column(String(16))
 
     gemelo: Mapped["Gemelo"] = relationship(
         back_populates="usuario", cascade="all, delete-orphan", uselist=False

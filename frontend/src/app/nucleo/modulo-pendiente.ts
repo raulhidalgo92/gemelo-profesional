@@ -8,7 +8,7 @@ import { Check, Database, LucideAngularModule } from 'lucide-angular';
   selector: 'app-modulo-pendiente',
   imports: [LucideAngularModule],
   template: `
-    <header class="mb-10">
+    <header class="cabecera-pagina">
       <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-3">
           <h1 class="titulo-pagina">{{ titulo() }}</h1>
@@ -18,7 +18,7 @@ import { Check, Database, LucideAngularModule } from 'lucide-angular';
       </div>
     </header>
 
-    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <section class="tarjeta">
         <h2 class="titulo-seccion">Qué podrás hacer</h2>
         <ul class="mt-5 space-y-4">

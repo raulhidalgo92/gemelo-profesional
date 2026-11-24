@@ -1,0 +1,124 @@
+/* Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR) */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Tus datos: ficha de perfil con las acciones a la derecha */
+/* Mismo relleno inferior que las filas de los demás apartados: separaciones iguales */
+.perfil {
+  padding-bottom: 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.boton-avatar {
+  position: relative;
+  flex: none;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+/* Lápiz en la esquina del avatar */
+.lapiz {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-fondo);
+  border-radius: 50%;
+  background: var(--color-superficie);
+  color: var(--color-tinta-suave);
+  box-shadow: 0 1px 3px rgb(23 23 28 / 18%);
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.boton-avatar:hover .lapiz,
+.boton-avatar[aria-expanded='true'] .lapiz {
+  color: var(--color-tinta);
+  transform: scale(1.08);
+}
+.boton-avatar:active {
+  transform: scale(0.97);
+}
+.boton-avatar:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgb(91 79 245 / 22%);
+}
+/* Nombre y su campo de edición miden lo mismo: al editar no se mueve nada */
+.nombre {
+  display: block;
+  height: 30px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -0.015em;
+}
+.campo-nombre {
+  width: min(100%, 320px);
+  margin-left: -9px;
+  padding: 0 8px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  outline: none;
+  background: var(--color-superficie);
+  color: var(--color-tinta);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.campo-nombre:focus {
+  border-color: var(--color-acento);
+  box-shadow: 0 0 0 3px rgb(91 79 245 / 15%);
+}
+.campo-nombre[aria-invalid='true'] {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgb(217 45 32 / 12%);
+}
+.linea-perfil {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  font-size: 14px;
+}
+.acciones-perfil {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.paleta {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  transform-origin: top left;
+}
+.paleta-entra {
+  animation: paleta-entra 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.paleta-sale {
+  animation: paleta-entra 0.14s ease-in reverse both;
+}
+@keyframes paleta-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+@media (max-width: 640px) {
+  .perfil {
+    flex-wrap: wrap;
+  }
+  .acciones-perfil {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paleta-entra,
+  .paleta-sale {
+    animation: none;
+  }
+}

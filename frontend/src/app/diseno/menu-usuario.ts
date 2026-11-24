@@ -1,6 +1,6 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
-import { Component, ElementRef, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   ArrowRight,
@@ -8,14 +8,16 @@ import {
   LucideAngularModule,
   Power,
   ShieldCheck,
+  UserRound,
 } from 'lucide-angular';
 
 import { SesionService } from '../nucleo/sesion.service';
+import { Avatar } from '../nucleo/ui/avatar';
 
 /** Tarjeta del usuario que despliega sus opciones, entre ellas cerrar la sesión. */
 @Component({
   selector: 'app-menu-usuario',
-  imports: [RouterLink, LucideAngularModule],
+  imports: [Avatar, RouterLink, LucideAngularModule],
   host: {
     class: 'relative block',
     '(document:click)': 'alPulsarFuera($event)',
@@ -43,6 +45,15 @@ import { SesionService } from '../nucleo/sesion.service';
           >
             <lucide-icon [img]="iconos.ShieldCheck" [size]="17" />
             Privacidad
+          </a>
+          <a
+            routerLink="/cuenta"
+            role="menuitem"
+            class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-tinta-suave transition hover:bg-fondo hover:text-tinta"
+            (click)="abierto.set(false)"
+          >
+            <lucide-icon [img]="iconos.UserRound" [size]="17" />
+            Mi cuenta
           </a>
           <button
             type="button"
@@ -72,10 +83,7 @@ import { SesionService } from '../nucleo/sesion.service';
       [attr.aria-label]="'Menú de ' + usuario()?.nombre"
       (click)="abierto.set(!abierto())"
     >
-      <span
-        class="grid size-9 shrink-0 place-items-center rounded-full bg-tinta text-sm font-semibold text-white"
-        >{{ inicial() }}</span
-      >
+      <app-avatar [nombre]="usuario()?.nombre ?? ''" [avatar]="usuario()?.avatar" />
       @if (!compacto()) {
         <span class="min-w-0 flex-1">
           <span class="block truncate text-sm font-semibold">{{ usuario()?.nombre }}</span>
@@ -94,12 +102,9 @@ export class MenuUsuario {
   private readonly router = inject(Router);
   private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  protected readonly iconos = { ArrowRight, ChevronsUpDown, Power, ShieldCheck };
+  protected readonly iconos = { ArrowRight, ChevronsUpDown, Power, ShieldCheck, UserRound };
   protected readonly abierto = signal(false);
   protected readonly usuario = this.sesion.usuario;
-  protected readonly inicial = computed(() =>
-    (this.usuario()?.nombre ?? '?').charAt(0).toUpperCase(),
-  );
 
   protected alPulsarFuera(evento: Event): void {
     if (!this.elemento.nativeElement.contains(evento.target as Node)) this.abierto.set(false);
