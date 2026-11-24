@@ -10,7 +10,7 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.servicios import seguridad
@@ -164,3 +164,33 @@ def usuario_de_sesion(s: Session, token: str) -> Usuario | None:
 
 def cerrar_sesion(s: Session, token: str) -> None:
     s.execute(delete(SesionUsuario).where(SesionUsuario.hash_token == seguridad.resumen(token)))
+
+
+def otras_sesiones(s: Session, usuario: Usuario, token: str | None) -> int:
+    """Sesiones abiertas en otros dispositivos (sin contar la actual)."""
+    return s.scalar(
+        select(func.count()).where(
+            SesionUsuario.usuario_id == usuario.id,
+            SesionUsuario.hash_token != seguridad.resumen(token or ""),
+            SesionUsuario.expira_en > ahora(),
+        )
+    )
+
+
+def cerrar_otras_sesiones(s: Session, usuario: Usuario, token: str | None) -> None:
+    s.execute(
+        delete(SesionUsuario).where(
+            SesionUsuario.usuario_id == usuario.id,
+            SesionUsuario.hash_token != seguridad.resumen(token or ""),
+        )
+    )
+
+
+def cambiar_contrasena(
+    s: Session, usuario: Usuario, actual: str, nueva: str, token: str | None
+) -> None:
+    """Pide la contraseña actual y, por seguridad, cierra las sesiones de otros dispositivos."""
+    if not seguridad.verificar_contrasena(actual, usuario.hash_contrasena):
+        raise ErrorCuenta("contrasena_actual")
+    usuario.hash_contrasena = seguridad.hash_contrasena(nueva)
+    cerrar_otras_sesiones(s, usuario, token)

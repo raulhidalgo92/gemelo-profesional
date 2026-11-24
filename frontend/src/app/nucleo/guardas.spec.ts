@@ -11,10 +11,15 @@ import {
   provideRouter,
 } from '@angular/router';
 
-import { bienvenidaHecha, conSesion, sinSesion } from './guardas';
+import { bienvenidaHecha, conSesion, fueraDeLaApp, sinSesion } from './guardas';
 import { SesionService, Usuario } from './sesion.service';
 
-const USUARIO: Usuario = { nombre: 'Ana', email: 'ana@ejemplo.com', bienvenida_pendiente: false };
+const USUARIO: Usuario = {
+  nombre: 'Ana',
+  email: 'ana@ejemplo.com',
+  avatar: null,
+  bienvenida_pendiente: false,
+};
 
 describe('guardas de rutas', () => {
   function ejecutar(guarda: CanActivateFn, usuario: Usuario | null) {
@@ -44,5 +49,12 @@ describe('guardas de rutas', () => {
     const pendiente = { ...USUARIO, bienvenida_pendiente: true };
     expect(url(await ejecutar(bienvenidaHecha, pendiente))).toBe('/bienvenida');
     expect(await ejecutar(bienvenidaHecha, USUARIO)).toBe(true);
+  });
+
+  it('las páginas sin menú son para quien aún no ha entrado en la aplicación', async () => {
+    const pendiente = { ...USUARIO, bienvenida_pendiente: true };
+    expect(await ejecutar(fueraDeLaApp as unknown as CanActivateFn, null)).toBe(true);
+    expect(await ejecutar(fueraDeLaApp as unknown as CanActivateFn, pendiente)).toBe(true);
+    expect(await ejecutar(fueraDeLaApp as unknown as CanActivateFn, USUARIO)).toBe(false);
   });
 });

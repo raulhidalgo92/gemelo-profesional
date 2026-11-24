@@ -1,0 +1,237 @@
+<div class="pagina-estrecha">
+  <header class="cabecera-pagina">
+    <div>
+      <h1 class="titulo-pagina">Mi cuenta</h1>
+      <p class="subtitulo-pagina">Tus datos, tu acceso y el control de tu información.</p>
+    </div>
+  </header>
+
+  @switch (cuenta()) {
+    @case (undefined) {
+      <p class="text-tinta-tenue">Cargando tu cuenta…</p>
+    }
+    @case (null) {
+      <p class="text-tinta-suave">No hemos podido cargar tu cuenta. Recarga la página.</p>
+    }
+    @default {
+      <section class="apartado" aria-labelledby="datos">
+        <h2 id="datos" class="apartado-titulo">Tus datos</h2>
+        <div class="apartado-contenido">
+          <app-ficha-perfil
+            [email]="cuenta()!.email"
+            [verificado]="!!cuenta()!.verificada_en"
+            (aviso)="avisar($event)"
+            (editando)="cambiandoClave.set(false)"
+          />
+        </div>
+      </section>
+
+      <section class="apartado" aria-labelledby="seguridad">
+        <div>
+          <h2 id="seguridad" class="apartado-titulo">Seguridad</h2>
+        </div>
+        <div class="filas apartado-contenido">
+          <div class="fila">
+            <div class="texto">
+              <b>Contraseña</b>
+              <span>Usa al menos {{ minClave }} caracteres</span>
+            </div>
+            <!-- Al editar, los botones ocupan el sitio de «Cambiar», como en el nombre -->
+            <div class="flex gap-2">
+              @if (cambiandoClave()) {
+                <button type="button" class="boton-fila" (click)="alternarClave()">Cancelar</button>
+                <button
+                  type="submit"
+                  form="form-clave"
+                  class="boton-fila oscuro"
+                  [disabled]="!formClave.value.actual || !formClave.value.nueva || enviando()"
+                >
+                  @if (enviando()) {
+                    <lucide-icon class="animate-spin" [img]="iconos.LoaderCircle" [size]="15" />
+                  }
+                  Guardar
+                </button>
+              } @else {
+                <button type="button" class="boton-fila" (click)="alternarClave()">
+                  Cambiar contraseña
+                </button>
+              }
+            </div>
+          </div>
+          @if (cambiandoClave()) {
+            <form
+              id="form-clave"
+              animate.enter="desplegar"
+              animate.leave="plegar"
+              class="formulario"
+              [formGroup]="formClave"
+              (ngSubmit)="guardarClave()"
+              novalidate
+            >
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label>
+                  Contraseña actual
+                  <input
+                    class="campo"
+                    type="password"
+                    formControlName="actual"
+                    autocomplete="current-password"
+                  />
+                </label>
+                <label>
+                  Nueva contraseña
+                  <input
+                    class="campo"
+                    type="password"
+                    formControlName="nueva"
+                    autocomplete="new-password"
+                  />
+                </label>
+              </div>
+              <p class="text-[13px] text-tinta-tenue">
+                Al cambiarla se cerrará tu sesión en los demás dispositivos.
+              </p>
+              @if (error()) {
+                <p class="error-formulario" role="alert">{{ error() }}</p>
+              }
+            </form>
+          }
+          <div class="fila">
+            <div class="texto">
+              <b>Sesiones abiertas</b>
+              <span>
+                @switch (otrasSesiones()) {
+                  @case (0) {
+                    Solo tienes abierta esta sesión
+                  }
+                  @case (1) {
+                    También tienes abierta 1 sesión en otro dispositivo
+                  }
+                  @default {
+                    También tienes abiertas {{ otrasSesiones() }} sesiones en otros dispositivos
+                  }
+                }
+              </span>
+            </div>
+            <button
+              type="button"
+              class="boton-fila"
+              [disabled]="!otrasSesiones() || cerrandoSesiones()"
+              (click)="cerrarSesiones()"
+            >
+              @if (cerrandoSesiones()) {
+                <lucide-icon class="animate-spin" [img]="iconos.LoaderCircle" [size]="14" />
+              }
+              Cerrar sesiones
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="apartado" aria-labelledby="informacion">
+        <div>
+          <h2 id="informacion" class="apartado-titulo">Tu información</h2>
+        </div>
+        <div class="filas apartado-contenido">
+          <div class="fila">
+            <div class="texto">
+              <b>Consentimiento</b>
+              <span>{{ consentimiento() }}</span>
+            </div>
+            <a routerLink="/privacidad" class="boton-fila">Ver política</a>
+          </div>
+          <div class="fila">
+            <div class="texto">
+              <b>Descargar mis datos</b>
+              <span>Tu cuenta, trayectoria, competencias y evidencias, en JSON</span>
+            </div>
+            <a href="/api/cuenta/exportar" download class="boton-fila">Descargar datos</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="apartado" aria-labelledby="eliminar">
+        <div class="flex items-center justify-between gap-[18px]">
+          <div>
+            <h2 id="eliminar" class="apartado-titulo">Eliminar cuenta</h2>
+            <p class="apartado-ayuda">Se borran tu cuenta, tu gemelo y todos tus datos.</p>
+          </div>
+          <button type="button" class="boton-fila peligro" (click)="abrirBaja()">
+            Eliminar cuenta
+          </button>
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<!-- Confirmación de la baja: qué se pierde y contraseña -->
+<dialog
+  #dialogoBaja
+  class="dialogo"
+  aria-labelledby="baja-titulo"
+  (click)="clicFueraBaja($event)"
+  (cancel)="alCancelarBaja($event)"
+>
+  <form class="p-6" [formGroup]="formBorrar" (ngSubmit)="borrar()" novalidate>
+    <h2 id="baja-titulo" class="text-[19px] font-semibold tracking-tight">¿Eliminar tu cuenta?</h2>
+    <p class="mt-1.5 text-[14px] leading-relaxed text-tinta-suave">
+      Se borrará todo lo que guardamos sobre ti y no se podrá recuperar:
+    </p>
+    <ul class="consecuencias">
+      <li>Tu cuenta y tu acceso</li>
+      <li>Tu gemelo: trayectoria, competencias y evidencias</li>
+      <li>Las entrevistas que hayas practicado</li>
+    </ul>
+    <a href="/api/cuenta/exportar" download class="descarga">
+      <lucide-icon [img]="iconos.Download" [size]="15" />
+      Antes, descarga tus datos
+    </a>
+
+    <label for="confirmar-baja" class="mt-6 block text-[13px] font-medium text-tinta-suave">
+      Escribe tu contraseña para confirmar
+    </label>
+    <input
+      id="confirmar-baja"
+      class="campo mt-1.5"
+      type="password"
+      formControlName="contrasena"
+      autocomplete="current-password"
+      [attr.aria-invalid]="!!error()"
+      (input)="error.set('')"
+    />
+    @if (error()) {
+      <p class="mt-1.5 text-[13px] text-error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="mt-6 flex justify-end gap-2">
+      <!-- El foco empieza en «Cancelar»: lo seguro en una acción que no se puede deshacer -->
+      <button
+        type="button"
+        class="boton-fila"
+        autofocus
+        [disabled]="enviando()"
+        (click)="cerrarBaja()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        class="boton-fila rojo"
+        [disabled]="!formBorrar.value.contrasena || enviando()"
+      >
+        @if (enviando()) {
+          <lucide-icon class="animate-spin" [img]="iconos.LoaderCircle" [size]="15" />
+        }
+        Eliminar definitivamente
+      </button>
+    </div>
+  </form>
+</dialog>
+
+@if (aviso()) {
+  <div class="aviso-flotante" role="status" animate.enter="aviso-entra" animate.leave="aviso-sale">
+    <lucide-icon [img]="iconos.Check" [size]="15" [strokeWidth]="2.4" />
+    {{ aviso() }}
+  </div>
+}

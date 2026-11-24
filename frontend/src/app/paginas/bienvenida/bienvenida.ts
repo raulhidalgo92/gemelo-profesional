@@ -15,15 +15,10 @@ import {
   X,
 } from 'lucide-angular';
 
-import { CompetenciaGemelo, GemeloService } from '../../nucleo/gemelo.service';
+import { CompetenciaGemelo, errorDeArchivoCv, GemeloService } from '../../nucleo/gemelo.service';
 import { SesionService, mensajeDeError } from '../../nucleo/sesion.service';
 import { Logo } from '../../nucleo/ui/logo';
 
-const TIPOS = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
-const MAX_MB = 5;
 const FASES_ANALISIS = [
   'Leyendo tu CV',
   'Ocultando tus datos personales',
@@ -71,7 +66,7 @@ export class BienvenidaPagina {
       1400,
     );
     this.destroyRef.onDestroy(() => clearInterval(reloj));
-    this.gemelo.subirCv(archivo).subscribe({
+    this.gemelo.subirPrimerCv(archivo).subscribe({
       next: (competencias) => {
         clearInterval(reloj);
         this.competencias.set(competencias);
@@ -119,12 +114,8 @@ export class BienvenidaPagina {
   private validar(archivo: File | null): void {
     this.errorArchivo.set('');
     if (!archivo) return;
-    if (!TIPOS.includes(archivo.type)) {
-      this.errorArchivo.set('Sube el CV en PDF o en Word (.docx).');
-    } else if (archivo.size > MAX_MB * 1024 * 1024) {
-      this.errorArchivo.set(`El archivo pesa más de ${MAX_MB} MB.`);
-    } else {
-      this.archivo.set(archivo);
-    }
+    const error = errorDeArchivoCv(archivo);
+    if (error) this.errorArchivo.set(error);
+    else this.archivo.set(archivo);
   }
 }

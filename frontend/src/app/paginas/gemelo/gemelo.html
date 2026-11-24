@@ -1,161 +1,222 @@
-<header class="mb-8">
-  <p class="text-sm text-tinta-tenue">Hola, {{ sesion.usuario()?.nombre }}</p>
-  <h1 class="mt-1 text-3xl font-semibold tracking-tight">Mi gemelo profesional</h1>
-  <p class="mt-2 max-w-2xl text-tinta-suave">
-    Tus competencias, su nivel y las evidencias que las respaldan. Cada acción en Empleo, Formarte o
-    Entrenador actualiza el gemelo, y las trayectorias y ofertas se recalculan.
-  </p>
-</header>
-
-<section class="tarjeta mb-6">
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <h3 class="text-lg">Tus competencias</h3>
-    @if (misCompetencias()?.length) {
-      <span class="etiqueta">{{ misCompetencias()!.length }} declaradas en tu CV</span>
-    }
-  </div>
-  @switch (misCompetencias()?.length) {
-    @case (undefined) {
-      <p class="mt-3 text-tinta-tenue">Cargando…</p>
-    }
-    @case (0) {
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-fondo p-5">
-        <p class="text-tinta-suave">
-          Aún no has subido tu CV. Con él construimos tu gemelo en unos segundos.
-        </p>
-        <a routerLink="/bienvenida" class="boton-primario">
-          <lucide-icon [img]="iconoCv" [size]="18" />
-          Subir mi CV
-        </a>
-      </div>
-    }
-    @default {
-      <ul class="mt-4 flex flex-wrap gap-2">
-        @for (c of misCompetencias(); track c.uri) {
-          <li
-            class="rounded-full border border-borde bg-superficie px-3 py-1.5 text-sm first-letter:uppercase"
-            [title]="c.origen ? 'En tu CV: «' + c.origen + '»' : ''"
-          >
-            {{ c.titulo }}
-          </li>
-        }
-      </ul>
-    }
-  }
-</section>
-
-<section class="rejilla">
-  <article class="tarjeta">
-    <h3>Estado del sistema</h3>
-    @switch (salud()) {
-      @case (undefined) {
-        <p class="suave">Comprobando…</p>
-      }
-      @case (null) {
-        <p><span class="punto error"></span> API no disponible</p>
-      }
-      @default {
-        <p>
-          <span class="punto" [class.ok]="salud()!.base_datos"></span>
-          API v{{ salud()!.version }} · base de datos
-          {{ salud()!.base_datos ? 'conectada' : 'sin conexión' }}
-        </p>
-      }
-    }
-  </article>
-
-  <article class="tarjeta">
-    <h3>Datos de mercado cargados</h3>
-    @if (mercado(); as m) {
-      <ul class="cifras">
-        <li>
-          <strong>{{ m.ocupaciones | number }}</strong> ocupaciones ESCO
-        </li>
-        <li>
-          <strong>{{ m.competencias | number }}</strong> competencias ESCO
-        </li>
-        <li>
-          <strong>{{ m.transiciones | number }}</strong> transiciones O*NET
-        </li>
-        <li>
-          <strong>{{ m.ofertas | number }}</strong> ofertas
-        </li>
-      </ul>
-    } @else {
-      <p class="suave">Sin datos todavía. Ejecuta la ingesta de ESCO y O*NET.</p>
-    }
-  </article>
-</section>
-
-<section class="tarjeta buscador">
-  <h3>Vocabulario ESCO</h3>
-  <p class="suave">
-    Todo (CV, ofertas, entrevistas) se traduce a competencias ESCO. Prueba a buscar una:
-  </p>
-
-  <div class="selector" role="radiogroup" aria-label="Tipo de búsqueda">
-    <button
-      type="button"
-      role="radio"
-      [attr.aria-checked]="modo() === 'semantico'"
-      [class.activo]="modo() === 'semantico'"
-      (click)="modo.set('semantico')"
-    >
-      Por significado
-    </button>
-    <button
-      type="button"
-      role="radio"
-      [attr.aria-checked]="modo() === 'texto'"
-      [class.activo]="modo() === 'texto'"
-      (click)="modo.set('texto')"
-    >
-      Por texto
-    </button>
-  </div>
-
-  <input
-    type="search"
-    aria-label="Buscar competencia"
-    placeholder="p. ej. Angular, Excel avanzado, trabajo en equipo…"
-    [value]="texto()"
-    (input)="texto.set($any($event.target).value)"
-  />
-
-  @if (sinIa()) {
-    <p class="aviso">
-      La búsqueda por significado no está disponible; se muestran resultados por texto.
-    </p>
-  }
-
-  @switch (busqueda()) {
-    @case (undefined) {
-      <p class="suave">Buscando…</p>
-    }
-    @case (null) {}
-    @default {
-      @if (busqueda()!.resultados.length === 0) {
-        <p class="suave">
-          Sin resultados.
-          @if (modo() === 'texto') {
-            Prueba la búsqueda por significado.
+<header class="cabecera-pagina">
+  <div class="flex min-w-0 items-center gap-4">
+    <app-avatar [nombre]="nombre()" [avatar]="avatar()" [tamano]="56" />
+    <div class="min-w-0">
+      <h1 class="titulo-pagina">Hola, {{ nombre() }}</h1>
+      @if (datosPerfil().length) {
+        <p class="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[14.5px] text-tinta-suave">
+          @for (d of datosPerfil(); track d) {
+            @if (!$first) {
+              <span class="separador text-tinta-tenue" aria-hidden="true">·</span>
+            }
+            <span [class.puesto]="$first">{{ d }}</span>
           }
         </p>
-      } @else {
-        <ul class="resultados">
-          @for (c of busqueda()!.resultados; track c.uri) {
-            <li>
-              <span>{{ c.titulo }}</span>
-              <span class="meta">
-                <span class="etiqueta">{{ tipo(c.tipo) }}</span>
-                <span class="similitud" title="Similitud con la búsqueda">{{
-                  c.similitud | percent
-                }}</span>
-              </span>
+      }
+    </div>
+  </div>
+  @if (datos()) {
+    <button type="button" class="boton-secundario" (click)="cv.abrir()">
+      <lucide-icon [img]="iconos.FileUp" [size]="18" />
+      {{ perfil() ? 'Actualizar CV' : 'Subir CV' }}
+    </button>
+  }
+</header>
+
+@switch (datos()) {
+  @case (undefined) {
+    <p class="text-tinta-tenue">Cargando tu gemelo…</p>
+  }
+  @case (null) {
+    <p class="text-tinta-suave">
+      No hemos podido cargar tu gemelo. Recarga la página en un momento.
+    </p>
+  }
+  @default {
+    <a routerLink="/futuro" class="destino mb-4 block rounded-[18px] px-7 py-6 text-white">
+      <small class="text-xs font-semibold tracking-[0.06em] text-[#c9c4ff] uppercase"
+        >Primer paso</small
+      >
+      <span class="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <span>
+          <b class="block text-2xl font-semibold tracking-tight">¿A dónde quieres llegar?</b>
+          <span class="mt-0.5 block text-sm text-white/70">
+            Elige un puesto y verás qué te falta, qué ofertas encajan y qué formación te acerca.
+          </span>
+        </span>
+        <span class="ir inline-flex items-center gap-1.5 text-sm font-semibold">
+          Elegir mi destino <lucide-icon [img]="iconos.ArrowRight" [size]="16" />
+        </span>
+      </span>
+    </a>
+
+    <section class="tarjeta mb-4 grid p-0! xl:grid-cols-3" aria-label="Accesos">
+      @for (a of accesos; track a.titulo) {
+        <div class="acceso flex items-center gap-[13px] px-5 py-[18px]">
+          <span
+            class="grid size-[42px] shrink-0 place-items-center rounded-xl bg-fondo text-tinta-tenue"
+          >
+            <lucide-icon [img]="a.icono" [size]="19" [strokeWidth]="1.75" />
+          </span>
+          <span class="min-w-0">
+            <b class="block text-[14.5px] leading-snug font-semibold">{{ a.titulo }}</b>
+            <small class="block text-[13px] text-tinta-tenue">Las verás al elegir tu destino</small>
+          </span>
+        </div>
+      }
+    </section>
+
+    <div class="mb-4 grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+      <app-trayectoria [perfil]="perfil()" [actualizado]="actualizado()" (subir)="cv.abrir()" />
+
+      <section class="tarjeta">
+        <div class="mb-[18px] flex items-center justify-between gap-3">
+          <h2 class="titulo-seccion">Tu avance</h2>
+          <span class="font-[650] text-acento">{{ hechas() }} de {{ tareas().length }}</span>
+        </div>
+        <div class="mb-4 grid grid-cols-5 gap-1" aria-hidden="true">
+          @for (t of tareas(); track t.texto) {
+            <i class="h-1.5 rounded-full" [class]="t.hecha ? 'bg-acento' : 'bg-seleccion'"></i>
+          }
+        </div>
+        @if (siguiente(); as s) {
+          <ng-template #tarea>
+            <span>
+              <small class="block text-xs font-semibold text-acento">Siguiente tarea</small>
+              <b class="text-[14.5px] font-semibold">{{ s.texto }}</b>
+            </span>
+            <lucide-icon class="ml-auto text-acento" [img]="iconos.ArrowRight" [size]="18" />
+          </ng-template>
+          @if (s.ruta) {
+            <a [routerLink]="s.ruta" class="siguiente flex items-center gap-3 py-0.5">
+              <ng-container [ngTemplateOutlet]="tarea" />
+            </a>
+          } @else {
+            <button
+              type="button"
+              class="siguiente flex w-full items-center gap-3 py-0.5 text-left"
+              (click)="cv.abrir()"
+            >
+              <ng-container [ngTemplateOutlet]="tarea" />
+            </button>
+          }
+        }
+        <div class="mt-[18px] mb-4 h-px bg-seleccion"></div>
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h3 class="text-[15px]">Tus logros</h3>
+          <span class="text-[13px] text-tinta-tenue"
+            >{{ conseguidos().length }} de {{ logros().length }}</span
+          >
+        </div>
+        <ul class="flex flex-wrap gap-3.5 p-1">
+          @for (l of logros(); track l.texto) {
+            <li
+              class="logro"
+              [class.conseguido]="l.conseguido"
+              role="img"
+              [title]="l.texto"
+              [attr.aria-label]="l.conseguido ? l.texto : l.texto + ' (por conseguir)'"
+            >
+              <lucide-icon
+                [img]="iconosLogro[l.icono]"
+                [size]="18"
+                [strokeWidth]="l.conseguido ? 1.75 : 1.6"
+              />
             </li>
           }
         </ul>
+        @if (conseguidos().at(-1); as ultimo) {
+          <p class="mt-3 text-[13px] text-tinta-suave">
+            Último: <b class="font-semibold text-tinta">{{ ultimo.texto }}</b>
+          </p>
+        }
+      </section>
+    </div>
+
+    <section class="tarjeta">
+      <div class="mb-[18px] flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <h2 class="titulo-seccion">Tus competencias</h2>
+        <span class="flex items-center gap-3.5 text-[13px]">
+          @if (competencias().length) {
+            <span class="text-tinta-tenue">
+              <b class="font-semibold text-tinta"
+                >{{ demostradas() }} de {{ competencias().length }}</b
+              >
+              demostradas
+            </span>
+          }
+          <button
+            type="button"
+            class="font-semibold whitespace-nowrap hover:text-acento"
+            (click)="todas.abrir()"
+          >
+            {{ competencias().length ? 'Ver todas' : 'Añadir' }}
+          </button>
+        </span>
+      </div>
+      @if (competencias().length) {
+        <div class="grid grid-cols-2 gap-y-[22px] xl:grid-cols-4 xl:gap-y-0">
+          @for (c of columnas(); track c.titulo) {
+            <div class="columna flex min-w-0 flex-col">
+              <h3 class="text-sm">{{ c.titulo }}</h3>
+              <small class="text-[12.5px] text-tinta-suave">{{ c.sub }}</small>
+              <p
+                class="mt-[13px] mb-[9px] text-[26px] leading-none font-[620] tracking-tight"
+                [attr.aria-label]="c.demostradas + ' de ' + c.total + ' demostradas'"
+              >
+                {{ c.demostradas
+                }}<small class="text-base font-medium tracking-normal text-tinta-suave">
+                  de {{ c.total }}</small
+                >
+              </p>
+              <div class="mb-[11px] flex gap-[3px]" aria-hidden="true">
+                @for (i of marcas(c.total); track i) {
+                  <i class="marca" [class.hecha]="i < c.demostradas"></i>
+                } @empty {
+                  <i class="marca relative overflow-hidden">
+                    <i
+                      class="absolute inset-y-0 left-0 bg-acento"
+                      [style.width.%]="c.total ? (c.demostradas / c.total) * 100 : 0"
+                    ></i>
+                  </i>
+                }
+              </div>
+              @if (c.total) {
+                <ul class="text-[12.5px] leading-[1.65] text-tinta-suave">
+                  @for (x of c.visibles; track x.uri) {
+                    <li
+                      class="first-letter:uppercase xl:truncate"
+                      [class.demostrada]="x.demostrada"
+                      [title]="x.titulo"
+                    >
+                      {{ x.titulo }}
+                    </li>
+                  }
+                  @if (c.resto) {
+                    <li class="text-tinta-tenue">+{{ c.resto }} más</li>
+                  }
+                </ul>
+              } @else {
+                <p class="text-[12.5px] text-tinta-tenue">Ninguna todavía</p>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-tinta-suave">
+          Cuando subas tu CV verás aquí tus competencias, ordenadas de las más generales a las más
+          específicas de tu puesto.
+        </p>
       }
-    }
+    </section>
+    <app-todas-competencias #todas [(competencias)]="competencias" />
   }
-</section>
+}
+
+<!-- Fuera del @switch para poder abrirlo desde la cabecera -->
+<app-actualizar-cv
+  #cv
+  [perfil]="perfil()"
+  [actualizado]="actualizado()"
+  (aplicado)="alAplicarCv($event)"
+/>

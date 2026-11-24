@@ -32,6 +32,8 @@ class CompetenciaSalida(BaseModel):
     uri: str
     titulo: str
     tipo: str | None
+    # Nivel de reutilización ESCO: transversal, cross-sector, sector-specific u occupation-specific
+    alcance: str | None = None
     similitud: float
 
 
@@ -40,33 +42,46 @@ class BusquedaSalida(BaseModel):
     resultados: list[CompetenciaSalida]
 
 
+# Sin el embedding: no hace falta devolverlo
+_COLUMNAS = (
+    Competencia.uri,
+    Competencia.titulo,
+    Competencia.tipo,
+    Competencia.nivel_reutilizacion,
+)
+
+
+def _salida(f, similitud: float) -> CompetenciaSalida:
+    return CompetenciaSalida(
+        uri=f.uri,
+        titulo=f.titulo,
+        tipo=f.tipo,
+        alcance=f.nivel_reutilizacion,
+        similitud=round(similitud, 3),
+    )
+
+
 def _por_texto(db: Session, q: str, limite: int) -> list[CompetenciaSalida]:
     similitud = func.similarity(Competencia.titulo, q)
     consulta = (
-        select(Competencia.uri, Competencia.titulo, Competencia.tipo, similitud.label("sim"))
+        select(*_COLUMNAS, similitud.label("sim"))
         .where(Competencia.titulo.op("%")(q) | Competencia.titulo.ilike(f"%{q}%"))
         .order_by(similitud.desc())
         .limit(limite)
     )
-    return [
-        CompetenciaSalida(uri=f.uri, titulo=f.titulo, tipo=f.tipo, similitud=round(f.sim, 3))
-        for f in db.execute(consulta)
-    ]
+    return [_salida(f, f.sim) for f in db.execute(consulta)]
 
 
 def _por_significado(db: Session, ia: ClienteIA, q: str, limite: int) -> list[CompetenciaSalida]:
     vector = ia.embeddings([q], tarea=TAREA_CONSULTA)[0]
     distancia = Competencia.embedding.cosine_distance(vector)
     consulta = (
-        select(Competencia.uri, Competencia.titulo, Competencia.tipo, distancia.label("dist"))
+        select(*_COLUMNAS, distancia.label("dist"))
         .where(Competencia.embedding.is_not(None))
         .order_by(distancia)
         .limit(limite)
     )
-    return [
-        CompetenciaSalida(uri=f.uri, titulo=f.titulo, tipo=f.tipo, similitud=round(1 - f.dist, 3))
-        for f in db.execute(consulta)
-    ]
+    return [_salida(f, 1 - f.dist) for f in db.execute(consulta)]
 
 
 @router.get("", response_model=BusquedaSalida)

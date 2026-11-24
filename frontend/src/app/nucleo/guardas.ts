@@ -1,7 +1,7 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, CanMatchFn, Router } from '@angular/router';
 
 import { SesionService } from './sesion.service';
 
@@ -31,4 +31,11 @@ export const bienvenidaHecha: CanActivateFn = async () => {
   const sesion = inject(SesionService);
   const usuario = await sesion.cargar();
   return usuario?.bienvenida_pendiente ? router.createUrlTree(['/bienvenida']) : true;
+};
+
+/** Versión sin menú de una página: para quien aún no ha entrado en la aplicación. */
+export const fueraDeLaApp: CanMatchFn = async () => {
+  const sesion = inject(SesionService);
+  const usuario = await sesion.cargar();
+  return !usuario || usuario.bienvenida_pendiente;
 };

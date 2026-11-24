@@ -1,0 +1,259 @@
+/* Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR) */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-tinta-tenue);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.buscador:focus-within {
+  border-color: var(--color-acento);
+  box-shadow: 0 0 0 4px rgb(91 79 245 / 13%);
+}
+.buscador input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--color-tinta);
+  font-size: 14px;
+}
+.buscador input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Pestañas con una línea de acento que se desliza */
+.estados {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  box-shadow: inset 0 -1px 0 var(--color-borde);
+}
+.estados::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--i) * 100% / 3);
+  width: calc(100% / 3);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-acento);
+  transition: left 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.estados button {
+  padding: 8px 4px 11px;
+  color: var(--color-tinta-tenue);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.estados button:hover,
+.estados button.activo {
+  color: var(--color-tinta);
+}
+.estados button:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.estados small {
+  font-size: 12px;
+  opacity: 0.65;
+}
+@media (max-width: 480px) {
+  .estados button {
+    font-size: 12.5px;
+  }
+}
+
+.alcances {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+.alcances button {
+  height: 29px;
+  padding: 0 11px;
+  border: 1px solid var(--color-borde);
+  border-radius: 99px;
+  color: var(--color-tinta-suave);
+  font-size: 12px;
+  font-weight: 500;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    transform 0.12s;
+}
+.alcances button:hover {
+  border-color: rgb(23 23 28 / 27%);
+}
+.alcances button:active {
+  transform: scale(0.94);
+}
+.alcances button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(91 79 245 / 20%);
+}
+.alcances button.activo {
+  background: var(--color-seleccion);
+  border-color: var(--color-seleccion);
+  color: var(--color-tinta);
+}
+.alcances .todos {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  padding: 0;
+}
+
+.fila {
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: background 0.12s;
+}
+.fila:hover {
+  background: var(--color-fondo);
+}
+.estado {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.estado:not(.hecha)::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c9c4ff;
+}
+.estado.hecha {
+  background: #332c78;
+  color: #efedff;
+}
+.quitar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--color-tinta-tenue);
+}
+/* Con ratón, la papelera aparece al pasar por la fila; en pantallas táctiles siempre */
+@media (hover: hover) {
+  .quitar {
+    opacity: 0;
+  }
+  .fila:hover .quitar,
+  .quitar:focus-visible {
+    opacity: 1;
+  }
+}
+
+.pequeno {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+  color: var(--color-tinta);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pequeno:hover {
+  background: var(--color-fondo);
+}
+.pequeno.oscuro {
+  border-color: var(--color-tinta);
+  background: var(--color-tinta);
+  color: #fff;
+}
+
+.anadir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.anadir:hover {
+  background: var(--color-fondo);
+  border-color: rgb(23 23 28 / 27%);
+}
+
+.resultados {
+  max-height: 174px;
+  margin-top: 6px;
+  overflow-y: auto;
+}
+.resultados button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 9px;
+  text-align: left;
+  font-size: 13.5px;
+}
+.resultados button:hover {
+  background: var(--color-fondo);
+}
+.resultados small {
+  color: var(--color-tinta-tenue);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Aviso flotante sobre el pie, con «Deshacer» */
+.aviso {
+  position: absolute;
+  right: 24px;
+  bottom: calc(100% + 10px);
+  left: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-tinta);
+  color: #fff;
+  font-size: 13.5px;
+  box-shadow: 0 10px 24px -12px var(--color-tinta);
+  animation: var(--animate-aparecer);
+}
+.aviso span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aviso button {
+  color: #c9c4ff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.aviso button:hover {
+  color: #fff;
+}

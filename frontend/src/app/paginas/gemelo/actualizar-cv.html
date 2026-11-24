@@ -1,0 +1,306 @@
+<dialog
+  #cajon
+  class="cajon"
+  aria-labelledby="cv-titulo"
+  (close)="alCerrar()"
+  (cancel)="alCancelar($event)"
+  (click)="clicFuera($event)"
+>
+  <div class="flex h-full flex-col">
+    <header class="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
+      <div>
+        <h2 id="cv-titulo" class="text-[21px] font-semibold tracking-tight">Actualizar tu CV</h2>
+        <p class="mt-0.5 text-[13.5px] text-tinta-suave">
+          @switch (fase()) {
+            @case ('subir') {
+              Revisarás los cambios antes de aplicarlos
+            }
+            @case ('leyendo') {
+              Un momento, no tardamos
+            }
+            @case ('revisar') {
+              Esto es lo que ha cambiado. Nada se aplica hasta que confirmes.
+            }
+          }
+        </p>
+      </div>
+      <button
+        type="button"
+        class="boton-icono"
+        aria-label="Cerrar"
+        [disabled]="guardando()"
+        (click)="cerrar()"
+      >
+        <lucide-icon [img]="iconos.X" [size]="18" />
+      </button>
+    </header>
+
+    <div #cuerpo class="min-h-0 flex-1 overflow-y-auto px-6 pt-1 pb-6 max-sm:px-[18px]">
+      @switch (fase()) {
+        @case ('subir') {
+          <label
+            class="zona"
+            [class.sobre]="arrastrando()"
+            (dragover)="$event.preventDefault(); arrastrando.set(true)"
+            (dragleave)="arrastrando.set(false)"
+            (drop)="soltar($event)"
+          >
+            <input
+              type="file"
+              class="sr-only"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              (change)="elegir($event)"
+            />
+            <span class="icono-archivo mb-2.5">
+              <lucide-icon [img]="iconos.FileUp" [size]="21" [strokeWidth]="1.75" />
+            </span>
+            <b class="text-[15px] font-semibold">Arrastra aquí tu CV</b>
+            <span class="text-[13.5px] text-tinta-suave">
+              o <span class="font-semibold text-tinta">elige un archivo</span>
+            </span>
+            <small class="mt-2 text-[12.5px] text-tinta-tenue"
+              >PDF o Word · hasta {{ maxMb }} MB</small
+            >
+          </label>
+          @if (error()) {
+            <p class="mt-2.5 text-[13px] text-error" role="alert">{{ error() }}</p>
+          }
+          <p class="mt-[18px] flex items-start gap-2.5 text-[13px] leading-[1.45] text-tinta-suave">
+            <lucide-icon
+              class="mt-px shrink-0 text-acento"
+              [img]="iconos.ShieldCheck"
+              [size]="16"
+            />
+            <span>
+              <b class="font-semibold text-tinta">No guardamos el archivo.</b>
+              Lo leemos, ocultamos tus datos personales y nos quedamos solo con tu trayectoria y tus
+              competencias.
+            </span>
+          </p>
+          @if (actualizado()) {
+            <p class="mt-[22px] border-t border-seleccion pt-4 text-[13px] text-tinta-tenue">
+              Última actualización:
+              <b class="font-medium text-tinta-suave">{{ actualizado() }}</b>
+            </p>
+          }
+        }
+
+        @case ('leyendo') {
+          <div class="flex items-center gap-3 pt-1.5 pb-[18px]">
+            <span class="icono-archivo pequeno">
+              <lucide-icon [img]="iconos.FileText" [size]="18" [strokeWidth]="1.75" />
+            </span>
+            <div class="min-w-0">
+              <b class="block truncate text-sm font-semibold">{{ nombreArchivo() }}</b>
+              <small class="text-[12.5px] text-tinta-tenue">Se borra al terminar</small>
+            </div>
+          </div>
+          <ol class="grid gap-3.5" aria-live="polite">
+            @for (p of pasos; track p) {
+              <li class="paso" [class.hecho]="$index < paso()" [class.ahora]="$index === paso()">
+                <span class="marca-paso">
+                  <lucide-icon
+                    [img]="$index === paso() ? iconos.LoaderCircle : iconos.Check"
+                    [size]="$index === paso() ? 18 : 12"
+                    [strokeWidth]="$index === paso() ? 2 : 2.5"
+                  />
+                </span>
+                {{ p }}
+              </li>
+            }
+          </ol>
+        }
+
+        @case ('revisar') {
+          @if (cambios().length) {
+            <section class="seccion">
+              <div class="cabecera-seccion">
+                <h3>Tu trayectoria</h3>
+                <span>Se actualiza con tu CV</span>
+              </div>
+              @for (c of cambios(); track $index) {
+                <div class="fila">
+                  <span class="marca" [class]="c.tipo">
+                    <lucide-icon
+                      [img]="
+                        c.tipo === 'nueva'
+                          ? iconos.Plus
+                          : c.tipo === 'editada'
+                            ? iconos.Pencil
+                            : iconos.Minus
+                      "
+                      [size]="12"
+                      [strokeWidth]="2.4"
+                    />
+                  </span>
+                  <div class="min-w-0">
+                    <b>{{ c.titulo }}</b>
+                    <small>{{ c.detalle }}</small>
+                  </div>
+                </div>
+              }
+            </section>
+          }
+
+          @if (nuevas().length) {
+            <section class="seccion">
+              <div class="cabecera-seccion">
+                <h3>Competencias nuevas</h3>
+                <span>{{ nuevas().length }}</span>
+              </div>
+              <p class="ayuda">Se añaden como por demostrar.</p>
+              @for (c of nuevas(); track c.uri) {
+                <label class="fila marcable">
+                  <span class="casilla">
+                    <input
+                      type="checkbox"
+                      [checked]="!descartadas().has(c.uri)"
+                      (change)="alterna(descartadas, c.uri)"
+                    />
+                    <i><lucide-icon [img]="iconos.Check" [size]="13" [strokeWidth]="2.6" /></i>
+                  </span>
+                  <div class="min-w-0">
+                    <b class="first-letter:uppercase">{{ c.titulo }}</b>
+                    <small>En tu CV: «{{ c.termino }}» · {{ alcance(c.alcance) }}</small>
+                  </div>
+                </label>
+              }
+            </section>
+          }
+
+          @if (yaNo().length) {
+            <section class="seccion">
+              <div class="cabecera-seccion">
+                <h3>Ya no aparecen en tu CV</h3>
+                <span>{{ yaNo().length }}</span>
+              </div>
+              <p class="ayuda">Las conservamos, salvo que las desmarques.</p>
+              @for (c of yaNo(); track c.uri) {
+                <label class="fila marcable">
+                  <span class="casilla">
+                    <input
+                      type="checkbox"
+                      [checked]="!quitadas().has(c.uri)"
+                      (change)="alterna(quitadas, c.uri)"
+                    />
+                    <i><lucide-icon [img]="iconos.Check" [size]="13" [strokeWidth]="2.6" /></i>
+                  </span>
+                  <div class="min-w-0">
+                    <b class="first-letter:uppercase">{{ c.titulo }}</b>
+                    <small>
+                      @if (c.origen) {
+                        En tu CV anterior: «{{ c.origen }}» ·
+                      }
+                      {{ alcance(c.alcance) }}
+                    </small>
+                  </div>
+                </label>
+              }
+            </section>
+          }
+
+          <div class="fin">
+            @if (siguenIgual()) {
+              <p>
+                <lucide-icon [img]="iconos.Equal" [size]="16" />
+                <span
+                  ><b
+                    >{{ siguenIgual() }}
+                    {{ siguenIgual() === 1 ? 'competencia' : 'competencias' }}</b
+                  >
+                  {{ siguenIgual() === 1 ? 'sigue' : 'siguen' }} igual.</span
+                >
+              </p>
+            }
+            <p>
+              <lucide-icon [img]="iconos.ShieldCheck" [size]="16" />
+              <span>Las competencias que hayas demostrado o añadido tú no se tocan nunca.</span>
+            </p>
+          </div>
+          @if (error()) {
+            <p class="mt-4 text-[13px] text-error" role="alert">{{ error() }}</p>
+          }
+        }
+
+        @case ('al-dia') {
+          <div class="al-dia flex flex-col items-center px-3 pt-14 pb-2.5 text-center">
+            <!-- Tu CV y tu gemelo, iguales: nada que cambiar -->
+            <svg class="mb-5" width="200" height="144" viewBox="0 0 200 144" aria-hidden="true">
+              <ellipse cx="100" cy="76" rx="78" ry="58" fill="var(--color-acento-suave)" />
+              <g class="gemelo">
+                <rect x="56" y="24" width="64" height="84" rx="10" fill="#fff" stroke="#e7e7ec" />
+                <circle cx="71" cy="41" r="6" fill="#efeff3" />
+                <rect x="82" y="37" width="26" height="4" rx="2" fill="#efeff3" />
+                <rect x="82" y="44" width="16" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="66" y="60" width="44" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="66" y="68" width="36" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="66" y="76" width="40" height="3" rx="1.5" fill="#efeff3" />
+              </g>
+              <g class="cv">
+                <rect x="80" y="30" width="64" height="84" rx="10" fill="#fff" stroke="#d9d6f7" />
+                <circle cx="95" cy="47" r="6" fill="#e4e1fb" />
+                <rect x="106" y="43" width="26" height="4" rx="2" fill="#e4e1fb" />
+                <rect x="106" y="50" width="16" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="90" y="66" width="44" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="90" y="74" width="36" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="90" y="82" width="40" height="3" rx="1.5" fill="#efeff3" />
+                <rect x="90" y="94" width="22" height="4" rx="2" fill="#c9c4ff" />
+              </g>
+              <g class="sello">
+                <circle cx="142" cy="108" r="17" fill="#332c78" stroke="#fff" stroke-width="4" />
+                <path
+                  class="check"
+                  d="M134.5 108.5l5 5 10-10.5"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="2.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+              <path class="destello" d="M40 34l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#c9c4ff" />
+              <path
+                class="destello"
+                d="M166 38l1.5 3.5 3.5 1.5-3.5 1.5-1.5 3.5-1.5-3.5-3.5-1.5 3.5-1.5z"
+                fill="#c9c4ff"
+              />
+              <circle class="destello" cx="38" cy="96" r="3" fill="#dcd8fb" />
+            </svg>
+            <b class="text-[17px] font-semibold tracking-tight">Tu CV no trae cambios</b>
+            <p
+              class="mt-1.5 max-w-[320px] text-[13.5px] leading-relaxed text-balance text-tinta-suave"
+            >
+              Tu gemelo ya está al día con tu CV. No hemos tocado nada.
+            </p>
+            <button #entendido type="button" class="boton-secundario mt-5" (click)="cerrar()">
+              Entendido
+            </button>
+          </div>
+        }
+      }
+    </div>
+
+    @if (fase() === 'revisar') {
+      <footer
+        class="flex justify-end gap-2 border-t border-borde px-6 pt-3.5 pb-[18px] max-sm:px-[18px] max-sm:[&>button]:flex-1"
+      >
+        <button type="button" class="boton-secundario" [disabled]="guardando()" (click)="cerrar()">
+          Cancelar
+        </button>
+        <button type="button" class="boton-primario" [disabled]="guardando()" (click)="aplicar()">
+          @if (guardando()) {
+            <lucide-icon class="animate-spin" [img]="iconos.LoaderCircle" [size]="18" />
+          }
+          Actualizar mi gemelo
+        </button>
+      </footer>
+    }
+  </div>
+</dialog>
+
+@if (aviso()) {
+  <div class="aviso-flotante" role="status" animate.enter="aviso-entra" animate.leave="aviso-sale">
+    <lucide-icon [img]="iconos.Check" [size]="16" [strokeWidth]="2.4" />
+    {{ aviso() }}
+  </div>
+}

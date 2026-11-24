@@ -31,6 +31,8 @@ class Usuario(ConMarcasTiempo, Base):
     verificado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Asistente de bienvenida terminado (o pospuesto) por el usuario
     bienvenida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Avatar elegido de la colección de la app; sin avatar se muestra la inicial
+    avatar: Mapped[str | None] = mapped_column(String(16))
 
     gemelo: Mapped["Gemelo"] = relationship(
         back_populates="usuario", cascade="all, delete-orphan", uselist=False
@@ -116,7 +118,9 @@ class Evidencia(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     gemelo_id: Mapped[int] = mapped_column(ForeignKey("gemelo.id", ondelete="CASCADE"), index=True)
     competencia_uri: Mapped[str] = mapped_column(ForeignKey("competencia.uri", ondelete="CASCADE"))
-    origen: Mapped[str] = mapped_column(String(16))  # cv | linkedin | entrevista | test
+    origen: Mapped[str] = mapped_column(
+        String(16)
+    )  # cv | conservada | manual | linkedin | entrevista | test
     fragmento: Mapped[str | None] = mapped_column(Text)
     puntuacion: Mapped[float | None] = mapped_column(Float)  # 0..1
     explicacion: Mapped[str | None] = mapped_column(Text)
