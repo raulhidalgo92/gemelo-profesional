@@ -70,9 +70,17 @@ describe('GemeloPagina', () => {
     expect(texto).toContain('Último:Primeraevidencia');
   });
 
+  it('con competencias pero sin trayectoria, el gemelo aún no está creado', () => {
+    const el = crear({ perfil: null, actualizado_en: null }, [
+      competencia('inglés', 'transversal'),
+    ]);
+    expect(el.textContent!.replace(/\s+/g, '')).toContain('SiguientetareaSubetuCV');
+    expect(el.querySelectorAll('.logro.conseguido')).toHaveLength(0);
+  });
+
   it('sin CV invita a subirlo', () => {
     const el = crear({ perfil: null, actualizado_en: null }, []);
-    expect(el.textContent).toContain('Subir mi CV');
+    expect(el.querySelector('app-trayectoria')!.textContent).toContain('Subir CV');
     expect(el.textContent!.replace(/\s+/g, '')).toContain('SiguientetareaSubetuCV');
     expect(el.querySelectorAll('.logro.conseguido')).toHaveLength(0);
   });

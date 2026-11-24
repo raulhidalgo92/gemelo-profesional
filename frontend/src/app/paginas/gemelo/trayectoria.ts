@@ -11,7 +11,7 @@ import { hitoInicial, hitos } from './panel';
   selector: 'app-trayectoria',
   imports: [LucideAngularModule],
   template: `
-    <section class="tarjeta h-full">
+    <section class="tarjeta flex h-full flex-col">
       <div class="mb-[18px] flex items-center justify-between gap-3">
         <h2 class="titulo-seccion">Tu trayectoria</h2>
         @if (actualizado()) {
@@ -21,7 +21,7 @@ import { hitoInicial, hitos } from './panel';
 
       @if (perfil(); as p) {
         @if (p.resumen) {
-          <p class="mb-6 text-[14.5px] leading-[1.65] text-tinta-suave">{{ p.resumen }}</p>
+          <p class="texto-tarjeta mb-6">{{ p.resumen }}</p>
         }
         @if (lista().length) {
           <div class="linea relative mx-[18px] hidden h-[74px] md:block">
@@ -77,14 +77,36 @@ import { hitoInicial, hitos } from './panel';
           </ol>
         }
       } @else {
-        <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-fondo p-5">
-          <p class="text-tinta-suave">
-            Sube tu CV y construimos tu trayectoria: tus puestos, tu formación y tu nivel de inglés.
-          </p>
-          <button type="button" class="boton-primario" (click)="subir.emit()">
-            <lucide-icon [img]="iconos.FileUp" [size]="18" />
-            Subir mi CV
-          </button>
+        <!-- Sin CV: la misma línea de tiempo, vacía, para intuir lo que aparecerá -->
+        <div class="flex flex-1 flex-col justify-center">
+          <div class="fantasma relative mx-[18px] mb-7 h-[60px]" aria-hidden="true">
+            <div class="absolute inset-x-0 top-4 border-t-2 border-dashed border-borde">
+              <span class="hoy"></span>
+            </div>
+            <span class="absolute top-11 -right-3 text-xs text-tinta-tenue">Hoy</span>
+            @for (h of fantasmas; track $index) {
+              <span
+                class="punto absolute top-0 -translate-x-1/2"
+                [class.formacion]="h.formacion"
+                [style.left.%]="h.posicion"
+              >
+                <lucide-icon
+                  [img]="h.formacion ? iconos.GraduationCap : iconos.Briefcase"
+                  [size]="16"
+                />
+              </span>
+            }
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+            <p class="texto-tarjeta max-w-md">
+              Sube tu CV y construimos tu trayectoria: tus puestos, tu formación y tu nivel de
+              inglés.
+            </p>
+            <button type="button" class="boton-secundario" (click)="subir.emit()">
+              <lucide-icon [img]="iconos.FileUp" [size]="18" />
+              Subir CV
+            </button>
+          </div>
         </div>
       }
     </section>
@@ -134,6 +156,10 @@ import { hitoInicial, hitos } from './panel';
       background: var(--color-tinta-tenue);
       box-shadow: 0 0 0 4px var(--color-seleccion);
     }
+    .fantasma .punto {
+      background: var(--color-fondo);
+      color: #c9c9d3;
+    }
     .vertical::before {
       content: '';
       position: absolute;
@@ -151,7 +177,13 @@ export class Trayectoria {
   readonly actualizado = input<string>();
   readonly subir = output();
 
-  protected readonly iconos = { FileUp };
+  protected readonly iconos = { Briefcase, FileUp, GraduationCap };
+  /** Hitos de muestra para la línea vacía */
+  protected readonly fantasmas = [
+    { posicion: 0, formacion: true },
+    { posicion: 30, formacion: false },
+    { posicion: 62, formacion: false },
+  ];
   private readonly hoy = new Date().getFullYear();
   protected readonly lista = computed(() => {
     const p = this.perfil();

@@ -109,7 +109,9 @@ export class GemeloPagina {
   );
 
   private readonly estado = computed<EstadoGemelo>(() => ({
-    conCv: !!this.perfil() || this.competencias().length > 0,
+    // El gemelo está creado cuando hay un CV analizado, que siempre deja su trayectoria
+    // (las competencias solas pueden venir de añadirlas a mano o de un CV antiguo)
+    conCv: !!this.perfil(),
     conDestino: false, // el destino llega en la siguiente fase
     demostradas: this.demostradas(),
     entrevistas: 0,

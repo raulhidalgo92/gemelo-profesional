@@ -130,6 +130,11 @@ export class ActualizarCv implements OnDestroy {
     this.reiniciar();
   }
 
+  /** Esc cierra el panel, salvo mientras se guardan los cambios */
+  protected alCancelar(e: Event): void {
+    if (this.guardando()) e.preventDefault();
+  }
+
   protected clicFuera(e: MouseEvent): void {
     if (e.target === this.cajon().nativeElement && !this.guardando()) this.cerrar();
   }

@@ -3,7 +3,7 @@
   class="cajon"
   aria-labelledby="cv-titulo"
   (close)="alCerrar()"
-  (cancel)="guardando() && $event.preventDefault()"
+  (cancel)="alCancelar($event)"
   (click)="clicFuera($event)"
 >
   <div class="flex h-full flex-col">
@@ -299,7 +299,7 @@
 </dialog>
 
 @if (aviso()) {
-  <div class="aviso-cv" role="status">
+  <div class="aviso-flotante" role="status" animate.enter="aviso-entra" animate.leave="aviso-sale">
     <lucide-icon [img]="iconos.Check" [size]="16" [strokeWidth]="2.4" />
     {{ aviso() }}
   </div>
