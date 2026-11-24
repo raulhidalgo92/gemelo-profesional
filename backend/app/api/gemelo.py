@@ -1,15 +1,18 @@
 # Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 # SPDX-License-Identifier: Apache-2.0
-"""Gemelo del usuario: análisis del CV y competencias declaradas."""
+"""Gemelo del usuario: análisis del CV, trayectoria y competencias declaradas."""
+
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import delete, select
 
 from app.api.deps import IA, SesionDB, UsuarioActual
 from app.servicios import cv
 from gemelo_core.ia import ErrorIA
 from gemelo_core.modelos import Competencia, Evidencia, Gemelo, GemeloCompetencia
+from gemelo_core.trayectoria import PerfilCv
 
 router = APIRouter()
 
@@ -52,18 +55,41 @@ def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
     return list(vistas.values())
 
 
-@router.post("/cv")
-async def subir_cv(
+class CompetenciaCv(BaseModel):
+    uri: Annotated[str, Field(max_length=255)]
+    titulo: str = ""
+    # Término del CV del que se dedujo (explicación)
+    termino: Annotated[str, Field(max_length=500)]
+    similitud: Annotated[float, Field(ge=0, le=1)]
+    # No estaba en el gemelo antes de este CV
+    nueva: bool = False
+
+
+class AnalisisCvSalida(BaseModel):
+    perfil: PerfilCv
+    competencias: list[CompetenciaCv]
+    # Solo venían del CV anterior y el nuevo no las trae: el usuario decide si se quedan
+    ya_no: list[CompetenciaGemelo]
+    trayectoria_cambia: bool
+
+
+class AplicarCvEntrada(BaseModel):
+    perfil: PerfilCv
+    competencias: Annotated[list[CompetenciaCv], Field(max_length=60)]
+    conservar: Annotated[list[str], Field(max_length=60)] = []
+
+
+@router.post("/cv/analizar")
+async def analizar_cv(
     archivo: UploadFile, usuario: UsuarioActual, s: SesionDB, ia: IA
-) -> list[CompetenciaGemelo]:
-    """Analiza el CV (PDF o Word) y actualiza las competencias declaradas.
+) -> AnalisisCvSalida:
+    """Analiza el CV (PDF o Word) y devuelve los cambios sin guardar nada.
     El archivo se procesa en memoria y no se guarda."""
     if ia is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "ia_no_disponible")
     contenido = await archivo.read(cv.MAX_BYTES + 1)
     try:
-        texto = cv.texto_de_archivo(contenido)
-        cv.analizar(s, ia, usuario, texto)
+        perfil, detectadas = cv.analizar(s, ia, usuario, cv.texto_de_archivo(contenido))
     except cv.ErrorCv as e:
         codigo = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE if e.codigo == "archivo_grande" else 422
         raise HTTPException(codigo, e.codigo) from e
@@ -71,6 +97,40 @@ async def subir_cv(
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "ia_no_disponible") from e
     finally:
         del contenido
+
+    gemelo = s.scalar(select(Gemelo).where(Gemelo.usuario_id == usuario.id))
+    actuales = _competencias(s, usuario.id)
+    previas = {c.uri for c in actuales}
+    ya_no = cv.solo_del_cv(s, gemelo.id) - {c.uri for c in detectadas} if gemelo else set()
+    return AnalisisCvSalida(
+        perfil=perfil,
+        competencias=[
+            CompetenciaCv(
+                uri=c.uri,
+                titulo=c.titulo,
+                termino=c.termino,
+                similitud=c.similitud,
+                nueva=c.uri not in previas,
+            )
+            for c in detectadas
+        ],
+        ya_no=[c for c in actuales if c.uri in ya_no],
+        trayectoria_cambia=cv.trayectoria_cambia(gemelo, perfil),
+    )
+
+
+@router.post("/cv/aplicar")
+def aplicar_cv(
+    entrada: AplicarCvEntrada, usuario: UsuarioActual, s: SesionDB
+) -> list[CompetenciaGemelo]:
+    """Guarda lo que el usuario ha confirmado tras revisar el análisis del CV."""
+    cv.aplicar(
+        s,
+        usuario,
+        entrada.perfil,
+        [cv.CompetenciaCv(c.uri, c.termino, c.similitud) for c in entrada.competencias],
+        set(entrada.conservar),
+    )
     return _competencias(s, usuario.id)
 
 

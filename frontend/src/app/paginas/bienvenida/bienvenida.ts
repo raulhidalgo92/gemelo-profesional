@@ -71,7 +71,7 @@ export class BienvenidaPagina {
       1400,
     );
     this.destroyRef.onDestroy(() => clearInterval(reloj));
-    this.gemelo.subirCv(archivo).subscribe({
+    this.gemelo.subirPrimerCv(archivo).subscribe({
       next: (competencias) => {
         clearInterval(reloj);
         this.competencias.set(competencias);

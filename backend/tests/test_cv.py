@@ -10,9 +10,16 @@ from app.api.deps import obtener_cliente_ia
 from app.main import app
 from app.servicios import cv
 from gemelo_core.extraccion import CompetenciaDetectada
-from gemelo_core.modelos import Competencia, Evidencia, GemeloCompetencia
+from gemelo_core.modelos import Competencia, Evidencia, Gemelo, GemeloCompetencia
+from gemelo_core.trayectoria import PerfilCv
 
 ESCO = "http://data.europa.eu/esco/skill"
+PERFIL = PerfilCv(
+    resumen="Analista de datos con 5 años de experiencia.",
+    experiencias=[{"puesto": "Analista de datos", "sector": "Banca", "inicio": 2021}],
+    formacion=[{"titulo": "Grado en Estadística", "inicio": 2016, "fin": 2020}],
+    nivel_ingles="B2",
+)
 TEXTO_CV = "Ana Pérez Gómez\nana@correo.com · 612345678\n" + "Experiencia en Excel y SQL. " * 10
 
 
@@ -68,6 +75,7 @@ def usuario_con_sesion(bd, monkeypatch):
             [
                 Competencia(uri=f"{ESCO}/excel", titulo="utilizar hojas de cálculo"),
                 Competencia(uri=f"{ESCO}/sql", titulo="SQL"),
+                Competencia(uri=f"{ESCO}/ingles", titulo="inglés"),
             ]
         )
         s.commit()
@@ -89,28 +97,60 @@ def usuario_con_sesion(bd, monkeypatch):
             CompetenciaDetectada(f"{ESCO}/sql", "SQL", "SQL", 0.9),
         ]
 
+    def perfil(ia, texto):
+        return PERFIL
+
     monkeypatch.setattr(cv, "proponer_terminos", proponer)
     monkeypatch.setattr(cv, "asociar_a_esco", asociar)
+    monkeypatch.setattr(cv, "extraer_perfil", perfil)
     app.dependency_overrides[obtener_cliente_ia] = lambda: object()
     yield cliente, recibido
     app.dependency_overrides.pop(obtener_cliente_ia, None)
 
 
-def test_subir_cv_guarda_competencias_declaradas_sin_datos_personales(usuario_con_sesion, bd):
-    cliente, recibido = usuario_con_sesion
+def _analizar(cliente):
     archivo = {"archivo": ("cv.docx", docx(TEXTO_CV), "application/octet-stream")}
-    r = cliente.post("/api/gemelo/cv", files=archivo)
+    r = cliente.post("/api/gemelo/cv/analizar", files=archivo)
     assert r.status_code == 200
-    assert [c["titulo"] for c in r.json()] == ["SQL", "utilizar hojas de cálculo"]
-    assert r.json()[1]["origen"] == "Excel"
+    return r.json()
+
+
+def test_analizar_no_guarda_nada_ni_envia_datos_personales(usuario_con_sesion, bd):
+    cliente, recibido = usuario_con_sesion
+    analisis = _analizar(cliente)
+    assert [(c["titulo"], c["termino"], c["nueva"]) for c in analisis["competencias"]] == [
+        ("utilizar hojas de cálculo", "Excel", True),
+        ("SQL", "SQL", True),
+    ]
+    assert analisis["perfil"]["experiencias"][0]["puesto"] == "Analista de datos"
+    assert (analisis["ya_no"], analisis["trayectoria_cambia"]) == ([], True)
 
     # Al modelo de lenguaje no le llegan nombre, correo ni teléfono
     for dato in ("Ana Pérez", "ana@correo.com", "612345678"):
         assert dato not in recibido["texto"]
-
     with bd() as s:
-        assert s.query(GemeloCompetencia).count() == 2
+        assert s.query(GemeloCompetencia).count() == 0
+
+
+def test_aplicar_guarda_lo_confirmado(usuario_con_sesion, bd):
+    cliente, _ = usuario_con_sesion
+    analisis = _analizar(cliente)
+    r = cliente.post(
+        "/api/gemelo/cv/aplicar",
+        json={"perfil": analisis["perfil"], "competencias": analisis["competencias"]},
+    )
+    assert [c["titulo"] for c in r.json()] == ["SQL", "utilizar hojas de cálculo"]
+    assert r.json()[1]["origen"] == "Excel"
+    with bd() as s:
+        gemelo = s.query(Gemelo).one()
+        assert gemelo.trayectoria["experiencias"][0]["sector"] == "Banca"
+        assert gemelo.nivel_ingles == "B2"
         assert {e.origen for e in s.query(Evidencia)} == {"cv"}
+
+    # Un segundo análisis del mismo CV no trae cambios
+    analisis = _analizar(cliente)
+    assert not any(c["nueva"] for c in analisis["competencias"])
+    assert (analisis["ya_no"], analisis["trayectoria_cambia"]) == ([], False)
 
     # El usuario quita una competencia que no reconoce
     cliente.request("DELETE", "/api/gemelo/competencias", params={"uri": f"{ESCO}/sql"})
@@ -119,14 +159,56 @@ def test_subir_cv_guarda_competencias_declaradas_sin_datos_personales(usuario_co
     ]
 
 
+def test_un_cv_nuevo_respeta_lo_demostrado_y_lo_que_se_conserva(usuario_con_sesion, bd):
+    cliente, _ = usuario_con_sesion
+    perfil = PERFIL.model_dump()
+    excel = {"uri": f"{ESCO}/excel", "termino": "Excel", "similitud": 0.8}
+    sql = {"uri": f"{ESCO}/sql", "termino": "SQL", "similitud": 0.9}
+    ingles = {"uri": f"{ESCO}/ingles", "termino": "inglés", "similitud": 0.9}
+    cliente.post(
+        "/api/gemelo/cv/aplicar", json={"perfil": perfil, "competencias": [excel, sql, ingles]}
+    )
+    with bd() as s:
+        s.get(
+            GemeloCompetencia, (s.query(Gemelo).one().id, f"{ESCO}/ingles")
+        ).nivel_demostrado = 0.8
+        s.commit()
+
+    # El CV nuevo solo trae Excel y SQL: inglés está demostrada, así que no se pregunta
+    assert _analizar(cliente)["ya_no"] == []
+
+    # Ahora solo trae Excel: SQL ya no aparece y el usuario decide conservarla
+    r = cliente.post(
+        "/api/gemelo/cv/aplicar",
+        json={"perfil": perfil, "competencias": [excel], "conservar": [f"{ESCO}/sql"]},
+    )
+    origenes = {c["titulo"]: c["origen"] for c in r.json()}
+    assert origenes == {"inglés": None, "SQL": "SQL", "utilizar hojas de cálculo": "Excel"}
+
+    # Y en otra actualización deja que se quite
+    r = cliente.post("/api/gemelo/cv/aplicar", json={"perfil": perfil, "competencias": [excel]})
+    assert {c["titulo"] for c in r.json()} == {"inglés", "utilizar hojas de cálculo"}
+
+
+def test_aplicar_ignora_competencias_que_no_son_de_esco(usuario_con_sesion):
+    cliente, _ = usuario_con_sesion
+    falsa = {"uri": "http://ejemplo.com/falsa", "termino": "x", "similitud": 0.5}
+    r = cliente.post(
+        "/api/gemelo/cv/aplicar", json={"perfil": PERFIL.model_dump(), "competencias": [falsa]}
+    )
+    assert (r.status_code, r.json()) == (200, [])
+
+
 def test_archivo_no_admitido(usuario_con_sesion):
     cliente, _ = usuario_con_sesion
-    r = cliente.post("/api/gemelo/cv", files={"archivo": ("foto.png", b"\x89PNG", "image/png")})
+    r = cliente.post(
+        "/api/gemelo/cv/analizar", files={"archivo": ("foto.png", b"\x89PNG", "image/png")}
+    )
     assert (r.status_code, r.json()["detail"]) == (422, "formato_no_admitido")
 
 
 def test_sin_sesion_no_se_puede_subir(bd):
     r = TestClient(app, headers={"X-Requested-With": "gemelo"}).post(
-        "/api/gemelo/cv", files={"archivo": ("cv.docx", b"PK", "application/octet-stream")}
+        "/api/gemelo/cv/analizar", files={"archivo": ("cv.docx", b"PK", "application/octet-stream")}
     )
     assert r.status_code == 401
