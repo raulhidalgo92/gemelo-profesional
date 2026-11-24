@@ -220,3 +220,10 @@
   [actualizado]="actualizado()"
   (aplicado)="alAplicarCv($event)"
 />
+
+@if (aviso()) {
+  <div class="aviso-flotante" role="status" animate.enter="aviso-entra" animate.leave="aviso-sale">
+    <lucide-icon [img]="iconos.Check" [size]="15" [strokeWidth]="2.4" />
+    {{ aviso() }}
+  </div>
+}

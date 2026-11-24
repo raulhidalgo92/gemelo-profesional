@@ -37,6 +37,14 @@ SMTP genérico con plantillas HTML y texto plano (Jinja2). En desarrollo, **Mail
 
 Tras activar la cuenta, un asistente de tres pasos (bienvenida → subir CV → revisar competencias) guía al usuario. Se puede posponer («Lo haré luego»); `usuario.bienvenida_en` registra que lo ha terminado o pospuesto.
 
+### Recuperación de la contraseña (24-11-2026)
+
+Sigue el mismo patrón que la activación, para que la experiencia sea coherente:
+
+1. En «Entrar», «¿La has olvidado?» lleva a pedir un código (`POST /api/cuenta/recuperar`). La respuesta es siempre la misma, exista o no la cuenta, y solo las cuentas activas reciben el correo; si se pidió otro hace menos de un minuto, no se envía nada.
+2. El correo trae un **código de 6 cifras** y un **enlace** (`/restablecer?token=…`), con la misma caducidad (15 minutos), el mismo límite de intentos y solo sus resúmenes guardados. Ambos viven en `codigo_verificacion` con `proposito = "recuperacion"` (migración 0008), de modo que un enlace de recuperación no sirve para activar una cuenta ni al revés.
+3. Con el código (y el correo) o con el enlace se elige la nueva contraseña (`POST /api/cuenta/restablecer`). Se cierran **todas** las sesiones abiertas, por si alguien más tenía acceso, y se entra directamente en la aplicación: el código ya demuestra que el correo es del usuario.
+
 ### Mi cuenta (24-11-2026)
 
 Página `/cuenta`, accesible desde el menú del usuario:
@@ -59,4 +67,3 @@ Página `/cuenta`, accesible desde el menú del usuario:
 
 - Los tests de la API de cuenta usan una base de datos PostgreSQL real (`TEST_DATABASE_URL`); la integración continua levanta un servicio de PostgreSQL para ejecutarlos.
 - El limitador de peticiones vive en memoria: es suficiente con un único proceso; con varios, habría que moverlo a la base de datos o a Redis.
-- Pendiente: recuperación de contraseña.

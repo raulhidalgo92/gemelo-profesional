@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Cookie, HTTPException, Request, Response, status
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 
 from app.api.deps import COOKIE_SESION, SesionDB, UsuarioActual
 from app.servicios import correo, cuentas, exportacion, seguridad
@@ -85,6 +85,21 @@ class CuentaSalida(BaseModel):
     otras_sesiones: int
 
 
+class RestablecerEntrada(BaseModel):
+    """Con el código (y el correo) o con el enlace del mensaje."""
+
+    contrasena: str = Field(min_length=10, max_length=128)
+    email: EmailStr | None = None
+    codigo: str | None = Field(default=None, pattern=r"^\s*\d{6}\s*$")
+    token: str | None = Field(default=None, min_length=20, max_length=100)
+
+    @model_validator(mode="after")
+    def _codigo_o_enlace(self) -> "RestablecerEntrada":
+        if not self.token and not (self.email and self.codigo):
+            raise ValueError("Hace falta el código con el correo, o el enlace")
+        return self
+
+
 class PerfilEntrada(BaseModel):
     """Cambios del perfil; solo se tocan los campos que llegan."""
 
@@ -121,18 +136,36 @@ def _limitar(limitador: seguridad.Limitador, request: Request) -> None:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "demasiadas_peticiones")
 
 
-def _enviar_activacion(tareas: BackgroundTasks, usuario: Usuario, act: cuentas.Activacion):
-    enlace = f"{ajustes().url_publica}/verificar?token={act.token}"
+def _enviar_codigo(
+    tareas: BackgroundTasks,
+    usuario: Usuario,
+    act: cuentas.Activacion,
+    *,
+    plantilla: str,
+    ruta: str,
+    asunto: str,
+):
     msg = correo.componer(
         usuario.email,
-        f"{act.codigo} es tu código para activar tu cuenta",
-        "activacion",
+        f"{act.codigo} {asunto}",
+        plantilla,
         nombre=usuario.nombre,
         codigo=act.codigo,
-        enlace=enlace,
+        enlace=f"{ajustes().url_publica}/{ruta}?token={act.token}",
         minutos=int(cuentas.VALIDEZ_CODIGO.total_seconds() // 60),
     )
     tareas.add_task(correo.enviar, msg)
+
+
+def _enviar_activacion(tareas: BackgroundTasks, usuario: Usuario, act: cuentas.Activacion):
+    _enviar_codigo(
+        tareas,
+        usuario,
+        act,
+        plantilla="activacion",
+        ruta="verificar",
+        asunto="es tu código para activar tu cuenta",
+    )
 
 
 def _con_sesion(s: SesionDB, respuesta: Response, usuario: Usuario) -> UsuarioSalida:
@@ -212,6 +245,45 @@ def entrar(
     _limitar(limite_entrada, request)
     try:
         usuario = cuentas.autenticar(s, datos.email, datos.contrasena)
+    except ErrorCuenta as e:
+        raise _error(e) from e
+    return _con_sesion(s, respuesta, usuario)
+
+
+RESPUESTA_RECUPERAR = (
+    "Si hay una cuenta con ese correo, recibirás un código para cambiar la contraseña."
+)
+
+
+@router.post("/recuperar", status_code=status.HTTP_202_ACCEPTED)
+def recuperar(datos: EmailEntrada, s: SesionDB, tareas: BackgroundTasks, request: Request) -> Aviso:
+    """Contraseña olvidada. La respuesta es siempre la misma, exista o no la cuenta."""
+    _limitar(limite_registro, request)
+    pedido = cuentas.pedir_recuperacion(s, datos.email)
+    s.commit()
+    if pedido:
+        usuario, act = pedido
+        _enviar_codigo(
+            tareas,
+            usuario,
+            act,
+            plantilla="recuperacion",
+            ruta="restablecer",
+            asunto="es tu código para cambiar tu contraseña",
+        )
+    return Aviso(detalle=RESPUESTA_RECUPERAR)
+
+
+@router.post("/restablecer")
+def restablecer(
+    datos: RestablecerEntrada, s: SesionDB, respuesta: Response, request: Request
+) -> UsuarioSalida:
+    """Nueva contraseña con el código o el enlace del correo; después se entra directamente."""
+    _limitar(limite_entrada, request)
+    try:
+        usuario = cuentas.restablecer(
+            s, datos.contrasena, email=datos.email, codigo=datos.codigo, token=datos.token
+        )
     except ErrorCuenta as e:
         raise _error(e) from e
     return _con_sesion(s, respuesta, usuario)

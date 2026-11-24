@@ -40,7 +40,9 @@ class Usuario(ConMarcasTiempo, Base):
 
 
 class CodigoVerificacion(Base):
-    """Código y enlace de activación de una cuenta. Se guardan solo sus resúmenes (hash)."""
+    """Código y enlace enviados por correo para activar la cuenta o recuperar la contraseña.
+    Se guardan solo sus resúmenes (hash). Hay como mucho uno por usuario: la activación es
+    para cuentas sin activar y la recuperación para cuentas ya activas."""
 
     __tablename__ = "codigo_verificacion"
 
@@ -52,6 +54,10 @@ class CodigoVerificacion(Base):
     intentos: Mapped[int] = mapped_column(SmallInteger, default=0)
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     enviado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # «activacion» o «recuperacion»: un enlace de un tipo no sirve para el otro
+    proposito: Mapped[str] = mapped_column(
+        String(12), default="activacion", server_default="activacion"
+    )
 
 
 class SesionUsuario(Base):

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { LoaderCircle, LucideAngularModule, MailCheck } from 'lucide-angular';
+import { LoaderCircle, LucideAngularModule } from 'lucide-angular';
 
 import { SesionService, codigoDeError, mensajeDeError } from '../../nucleo/sesion.service';
 import { CodigoOtp } from '../../nucleo/ui/codigo-otp';
@@ -15,9 +15,6 @@ const ESPERA_REENVIO = 60;
   imports: [CodigoOtp, RouterLink, LucideAngularModule],
   template: `
     <div class="mb-8">
-      <span class="mb-6 grid size-12 place-items-center rounded-2xl bg-acento-suave text-acento">
-        <lucide-icon [img]="iconos.MailCheck" [size]="22" />
-      </span>
       <p class="mb-3 text-[13px] font-medium tracking-wide text-acento uppercase">Paso 2 de 2</p>
       <h1 class="titulo-acceso">Revisa tu correo</h1>
       <p class="mt-2 text-tinta-suave">
@@ -65,7 +62,7 @@ export class VerificarCodigoPagina implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly iconos = { LoaderCircle, MailCheck };
+  protected readonly iconos = { LoaderCircle };
   protected readonly email = this.sesion.emailPendiente;
   protected readonly comprobando = signal(false);
   protected readonly fallo = signal(false);

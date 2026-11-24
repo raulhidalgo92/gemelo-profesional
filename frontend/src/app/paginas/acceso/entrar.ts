@@ -32,7 +32,15 @@ import { SesionService, codigoDeError, mensajeDeError } from '../../nucleo/sesio
         <input id="email" type="email" formControlName="email" class="campo" autocomplete="email" />
       </div>
       <div>
-        <label for="contrasena" class="etiqueta-campo">Contraseña</label>
+        <div class="flex items-baseline justify-between gap-3">
+          <label for="contrasena" class="etiqueta-campo">Contraseña</label>
+          <a
+            routerLink="/recuperar"
+            class="text-[13px] font-medium text-tinta-suave transition hover:text-tinta"
+            (click)="recordarEmail()"
+            >¿La has olvidado?</a
+          >
+        </div>
         <div class="relative">
           <input
             id="contrasena"
@@ -85,6 +93,12 @@ export class EntrarPagina {
     email: ['', [Validators.required, Validators.email]],
     contrasena: ['', Validators.required],
   });
+
+  /** Se lleva el correo ya escrito a «Recuperar la contraseña» */
+  protected recordarEmail(): void {
+    const { email } = this.form.getRawValue();
+    if (email) this.sesion.recordarEmail(email);
+  }
 
   protected enviar(): void {
     if (this.form.invalid) {

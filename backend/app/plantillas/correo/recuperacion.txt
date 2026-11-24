@@ -1,0 +1,10 @@
+Hola, {{ nombre }}:
+
+Tu código para cambiar la contraseña de Gemelo profesional es: {{ codigo }}
+
+También puedes cambiarla abriendo este enlace:
+{{ enlace }}
+
+El código y el enlace caducan en {{ minutos }} minutos.
+
+Si no lo has pedido tú, ignora este correo: tu contraseña no cambiará.
