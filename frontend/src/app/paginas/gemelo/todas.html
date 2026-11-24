@@ -14,7 +14,7 @@
           demostradas
         </p>
       </div>
-      <button type="button" class="icono" aria-label="Cerrar" (click)="cerrar()">
+      <button type="button" class="boton-icono" aria-label="Cerrar" (click)="cerrar()">
         <lucide-icon [img]="iconos.X" [size]="18" />
       </button>
     </header>
@@ -91,7 +91,7 @@
             </div>
             <button
               type="button"
-              class="icono quitar"
+              class="boton-icono quitar"
               title="Quitar"
               [attr.aria-label]="'Quitar ' + c.titulo"
               (click)="quitar(c)"

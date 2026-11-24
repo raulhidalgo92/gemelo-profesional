@@ -191,13 +191,14 @@ export interface EstadoGemelo {
 export interface Tarea {
   texto: string;
   hecha: boolean;
-  ruta: string;
+  /** Sin ruta: se hace en el propio panel (subir el CV) */
+  ruta: string | null;
 }
 
 export function tareas(e: EstadoGemelo): Tarea[] {
   return [
     { texto: 'Crea tu cuenta', hecha: true, ruta: '/gemelo' },
-    { texto: 'Sube tu CV', hecha: e.conCv, ruta: '/bienvenida' },
+    { texto: 'Sube tu CV', hecha: e.conCv, ruta: null },
     { texto: 'Elige tu destino', hecha: e.conDestino, ruta: '/futuro' },
     { texto: 'Demuestra una competencia', hecha: e.demostradas > 0, ruta: '/entrenador' },
     { texto: 'Practica una entrevista', hecha: e.entrevistas > 0, ruta: '/entrenador' },

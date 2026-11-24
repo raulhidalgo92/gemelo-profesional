@@ -72,6 +72,7 @@ describe('BienvenidaPagina', () => {
     const detectada = {
       uri: 'u1',
       titulo: 'contabilidad',
+      alcance: null,
       termino: 'Contabilidad',
       similitud: 0.8,
     };

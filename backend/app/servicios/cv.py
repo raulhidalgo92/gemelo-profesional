@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from docx import Document
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
-from sqlalchemy import delete, exists, select
+from sqlalchemy import delete, exists, select, update
 from sqlalchemy.orm import Session
 
 from gemelo_core.extraccion import CompetenciaDetectada, asociar_a_esco, proponer_terminos
@@ -134,13 +134,17 @@ def aplicar(
     unicas = {c.uri: c for c in competencias}
     validas = set(s.scalars(select(Competencia.uri).where(Competencia.uri.in_(unicas))))
 
+    # Lo que el usuario conserva queda confirmado: no se vuelve a preguntar por ello
     s.execute(
-        delete(Evidencia).where(
+        update(Evidencia)
+        .where(
             Evidencia.gemelo_id == gemelo.id,
             Evidencia.origen == "cv",
-            Evidencia.competencia_uri.not_in(conservar - validas),
+            Evidencia.competencia_uri.in_(conservar - validas),
         )
+        .values(origen="conservada")
     )
+    s.execute(delete(Evidencia).where(Evidencia.gemelo_id == gemelo.id, Evidencia.origen == "cv"))
     sin_respaldo = ~exists().where(
         Evidencia.gemelo_id == gemelo.id,
         Evidencia.competencia_uri == GemeloCompetencia.competencia_uri,

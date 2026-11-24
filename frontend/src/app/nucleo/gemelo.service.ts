@@ -42,6 +42,8 @@ export interface PerfilCv {
 export interface CompetenciaCv {
   uri: string;
   titulo: string;
+  /** Nivel de reutilización ESCO */
+  alcance: string | null;
   termino: string;
   similitud: number;
   /** No estaba en el gemelo antes de este CV */
@@ -61,6 +63,19 @@ export interface AnalisisCv {
 export interface ResumenGemelo {
   perfil: PerfilCv | null;
   actualizado_en: string | null;
+}
+
+const TIPOS_CV = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+export const MAX_MB_CV = 5;
+
+/** Comprueba el archivo antes de subirlo; devuelve el error o null si vale. */
+export function errorDeArchivoCv(archivo: File): string | null {
+  if (!TIPOS_CV.includes(archivo.type)) return 'Sube el CV en PDF o en Word (.docx).';
+  if (archivo.size > MAX_MB_CV * 1024 * 1024) return `El archivo pesa más de ${MAX_MB_CV} MB.`;
+  return null;
 }
 
 /** Competencias del gemelo del usuario y análisis del CV. */

@@ -1,7 +1,6 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
-import { Component, computed, input, linkedSignal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, input, linkedSignal, output } from '@angular/core';
 import { Briefcase, FileUp, GraduationCap, LucideAngularModule } from 'lucide-angular';
 
 import { PerfilCv } from '../../nucleo/gemelo.service';
@@ -10,7 +9,7 @@ import { hitoInicial, hitos } from './panel';
 /** Tarjeta «Tu trayectoria»: resumen del CV y línea de tiempo de experiencia y formación. */
 @Component({
   selector: 'app-trayectoria',
-  imports: [LucideAngularModule, RouterLink],
+  imports: [LucideAngularModule],
   template: `
     <section class="tarjeta h-full">
       <div class="mb-[18px] flex items-center justify-between gap-3">
@@ -82,10 +81,10 @@ import { hitoInicial, hitos } from './panel';
           <p class="text-tinta-suave">
             Sube tu CV y construimos tu trayectoria: tus puestos, tu formación y tu nivel de inglés.
           </p>
-          <a routerLink="/bienvenida" class="boton-primario">
+          <button type="button" class="boton-primario" (click)="subir.emit()">
             <lucide-icon [img]="iconos.FileUp" [size]="18" />
             Subir mi CV
-          </a>
+          </button>
         </div>
       }
     </section>
@@ -150,6 +149,7 @@ export class Trayectoria {
   readonly perfil = input.required<PerfilCv | null>();
   /** «hace 3 días», «hoy»… */
   readonly actualizado = input<string>();
+  readonly subir = output();
 
   protected readonly iconos = { FileUp };
   private readonly hoy = new Date().getFullYear();

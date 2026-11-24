@@ -45,7 +45,8 @@ def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
             Evidencia,
             (Evidencia.gemelo_id == Gemelo.id)
             & (Evidencia.competencia_uri == Competencia.uri)
-            & (Evidencia.origen == "cv"),
+            # «conservada»: venía de un CV anterior y el usuario decidió quedársela
+            & Evidencia.origen.in_(("cv", "conservada")),
         )
         .where(Gemelo.usuario_id == usuario_id)
         .order_by(Competencia.titulo)
@@ -70,6 +71,7 @@ def _competencias(s: SesionDB, usuario_id) -> list[CompetenciaGemelo]:
 class CompetenciaCv(BaseModel):
     uri: Annotated[str, Field(max_length=255)]
     titulo: str = ""
+    alcance: str | None = None
     # Término del CV del que se dedujo (explicación)
     termino: Annotated[str, Field(max_length=500)]
     similitud: Annotated[float, Field(ge=0, le=1)]
@@ -114,12 +116,21 @@ async def analizar_cv(
     actuales = _competencias(s, usuario.id)
     previas = {c.uri for c in actuales}
     ya_no = cv.solo_del_cv(s, gemelo.id) - {c.uri for c in detectadas} if gemelo else set()
+    alcances = {
+        uri: alcance
+        for uri, alcance in s.execute(
+            select(Competencia.uri, Competencia.nivel_reutilizacion).where(
+                Competencia.uri.in_([c.uri for c in detectadas])
+            )
+        )
+    }
     return AnalisisCvSalida(
         perfil=perfil,
         competencias=[
             CompetenciaCv(
                 uri=c.uri,
                 titulo=c.titulo,
+                alcance=alcances.get(c.uri),
                 termino=c.termino,
                 similitud=c.similitud,
                 nueva=c.uri not in previas,

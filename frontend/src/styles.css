@@ -133,6 +133,61 @@
     @apply font-medium text-tinta underline decoration-tinta/20 underline-offset-4 transition hover:decoration-tinta;
   }
 
+  /* Panel lateral (<dialog class="cajon">) a la derecha que entra deslizándose */
+  .cajon {
+    margin: 0 0 0 auto;
+    width: min(500px, 100vw);
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: var(--color-superficie);
+    color: var(--color-tinta);
+    box-shadow: -18px 0 44px -26px rgb(23 23 28 / 50%);
+  }
+  .cajon[open] {
+    animation: cajon-entrar 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .cajon::backdrop {
+    background: rgb(23 23 28 / 35%);
+    animation: cajon-velo 0.2s;
+  }
+  @keyframes cajon-entrar {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes cajon-velo {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cajon[open],
+    .cajon::backdrop {
+      animation: none;
+    }
+  }
+
+  .boton-icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: var(--color-tinta-suave);
+    transition:
+      background 0.15s,
+      color 0.15s,
+      opacity 0.12s;
+  }
+  .boton-icono:hover {
+    background: var(--color-seleccion);
+    color: var(--color-tinta);
+  }
+
   /* Compatibilidad con las páginas existentes */
   .tarjeta {
     @apply rounded-2xl border border-borde bg-superficie p-6 shadow-suave;

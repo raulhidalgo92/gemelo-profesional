@@ -1,5 +1,6 @@
 // Gemelo digital profesional · TFG Grado en Ingeniería Informática (UNIR)
 // SPDX-License-Identifier: Apache-2.0
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -8,6 +9,7 @@ import {
   Award,
   BadgeCheck,
   Briefcase,
+  FileUp,
   Flag,
   GraduationCap,
   LucideAngularModule,
@@ -30,6 +32,7 @@ import {
   puestoActual,
   tareas,
 } from './panel';
+import { ActualizarCv, CvAplicado } from './actualizar-cv';
 import { TodasCompetencias } from './todas';
 import { Trayectoria } from './trayectoria';
 
@@ -45,7 +48,14 @@ const ICONOS_LOGRO = {
 /** Panel «Mi gemelo»: punto de encuentro de la aplicación. */
 @Component({
   selector: 'app-gemelo',
-  imports: [LucideAngularModule, RouterLink, TodasCompetencias, Trayectoria],
+  imports: [
+    ActualizarCv,
+    LucideAngularModule,
+    NgTemplateOutlet,
+    RouterLink,
+    TodasCompetencias,
+    Trayectoria,
+  ],
   templateUrl: './gemelo.html',
   styleUrl: './gemelo.css',
 })
@@ -53,7 +63,7 @@ export class GemeloPagina {
   private readonly sesion = inject(SesionService);
   private readonly gemelo = inject(GemeloService);
 
-  protected readonly iconos = { ArrowRight };
+  protected readonly iconos = { ArrowRight, FileUp };
   protected readonly iconosLogro = ICONOS_LOGRO;
   protected readonly accesos = [
     { titulo: 'Ofertas para ti', icono: Briefcase },
@@ -71,8 +81,9 @@ export class GemeloPagina {
 
   private readonly hoy = new Date();
   protected readonly nombre = computed(() => this.sesion.usuario()?.nombre ?? '');
-  protected readonly perfil = computed(() => this.datos()?.resumen.perfil ?? null);
-  /** Editable: el panel «Ver todas» quita y añade sobre esta misma lista */
+  // Editables: «Actualizar CV» y «Ver todas» los cambian sin recargar la página
+  protected readonly perfil = linkedSignal(() => this.datos()?.resumen.perfil ?? null);
+  private readonly actualizadoEn = linkedSignal(() => this.datos()?.resumen.actualizado_en);
   protected readonly competencias = linkedSignal(() => this.datos()?.competencias ?? []);
 
   /** Puesto · años de experiencia · inglés */
@@ -88,7 +99,7 @@ export class GemeloPagina {
   });
 
   protected readonly actualizado = computed(() => {
-    const fecha = this.datos()?.resumen.actualizado_en;
+    const fecha = this.actualizadoEn();
     return fecha ? haceCuanto(new Date(fecha), this.hoy) : undefined;
   });
 
@@ -108,6 +119,12 @@ export class GemeloPagina {
   protected readonly siguiente = computed(() => this.tareas().find((t) => !t.hecha));
   protected readonly logros = computed(() => logros(this.estado()));
   protected readonly conseguidos = computed(() => this.logros().filter((l) => l.conseguido));
+
+  protected alAplicarCv(cv: CvAplicado): void {
+    this.perfil.set(cv.perfil);
+    this.competencias.set(cv.competencias);
+    this.actualizadoEn.set(new Date().toISOString());
+  }
 
   /** Marcas de la barra: una por competencia o, si son muchas, una barra continua */
   protected marcas(total: number): number[] {

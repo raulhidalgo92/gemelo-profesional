@@ -186,10 +186,11 @@ def test_un_cv_nuevo_respeta_lo_demostrado_y_lo_que_se_conserva(usuario_con_sesi
     )
     origenes = {c["titulo"]: c["origen"] for c in r.json()}
     assert origenes == {"inglés": None, "SQL": "SQL", "utilizar hojas de cálculo": "Excel"}
-
-    # Y en otra actualización deja que se quite
+    # Conservada queda confirmada: no se vuelve a preguntar por ella en otra actualización
+    with bd() as s:
+        assert cv.solo_del_cv(s, s.query(Gemelo).one().id) == {f"{ESCO}/excel"}
     r = cliente.post("/api/gemelo/cv/aplicar", json={"perfil": perfil, "competencias": [excel]})
-    assert {c["titulo"] for c in r.json()} == {"inglés", "utilizar hojas de cálculo"}
+    assert {c["titulo"] for c in r.json()} == {"inglés", "SQL", "utilizar hojas de cálculo"}
 
 
 def test_aplicar_ignora_competencias_que_no_son_de_esco(usuario_con_sesion):
